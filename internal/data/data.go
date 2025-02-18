@@ -1,5 +1,10 @@
 package data
 
+type MenuLink struct {
+	Name string
+	URL  string
+}
+
 type Phone struct {
 	Name        string
 	Image       string
@@ -14,6 +19,8 @@ type Review struct {
 
 type IndexPageData struct {
 	Title          string
+	MenuLinks      []MenuLink
+	IsAuthorized   bool
 	SalePhone      Phone
 	NewPhones      []Phone
 	FeaturedPhones []Phone
@@ -21,6 +28,14 @@ type IndexPageData struct {
 
 var Data = IndexPageData{
 	Title: "The Phone Marketplace",
+	MenuLinks: []MenuLink{
+		{Name: "Home", URL: "/"},
+		{Name: "Catalog", URL: "/catalog"},
+		{Name: "Sell", URL: "/sell"},
+		{Name: "Contacts", URL: "#contacts"},
+		{Name: "Cart", URL: "/cart"},
+	},
+	IsAuthorized: false,
 	SalePhone: Phone{
 		Name:  "Sharp Aquos wish4",
 		Image: "/static/images/aquos-wish-4-1.jpg",

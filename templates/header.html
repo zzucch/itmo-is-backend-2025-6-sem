@@ -3,11 +3,16 @@
     <h1>The Phone Marketplace</h1>
     <nav>
         <ul>
-            <li><a href="/">Home</a></li>
-            <li><a href="/catalog">Catalog</a></li>
-            <li><a href="/sell">Sell</a></li>
-            <li><a href="#contacts">Contacts</a></li>
-            <li><a href="/cart">Cart</a></li>
+            {{range .MenuLinks}}
+            <li><a href="{{.URL}}">{{.Name}}</a></li>
+            {{end}}
+
+            {{if .IsAuthorized}}
+            <li><a href="/signout">Sign out</a></li>
+            {{else}}
+            <li><a href="/login">Log in</a></li>
+            <li><a href="/signup">Sign up</a></li>
+            {{end}}
         </ul>
     </nav>
 </header>

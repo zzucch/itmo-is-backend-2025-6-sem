@@ -13,6 +13,11 @@ func Setup() *http.ServeMux {
 	mux.HandleFunc("/catalog", handler.HandleCatalog)
 	mux.HandleFunc("/cart", handler.HandleCart)
 	mux.HandleFunc("/sell", handler.HandleSell)
+
+	mux.HandleFunc("/login", handler.HandleLogin)
+	mux.HandleFunc("/signup", handler.HandleLogin)
+	mux.HandleFunc("/signout", handler.HandleLogout)
+
 	mux.Handle(
 		"/static/",
 		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))),
