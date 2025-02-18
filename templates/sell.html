@@ -1,0 +1,29 @@
+{{ define "content" }}
+<script src="/static/js/sell.js" defer></script>
+
+<section class="sell">
+    <h2>Selling your phone</h2>
+    <h3>Provide specifications for the phone you want to sell</h3>
+
+    <div id="success-message">Your phone has been successfully listed for sale!</div>
+
+    <form id="add-specification-form">
+        <div class="form-container">
+            <label for="current-specification" class="label-specification">Specification:</label>
+            <div id="specification-display" class="current-specification"></div>
+
+            <label for="value" class="label-value">Enter the value:</label>
+            <input type="text" id="value" name="value" required class="input-field">
+        </div>
+        <button type="submit" class="add-specifications-button">Add to specifications</button>
+    </form>
+
+    <div id="table-container" class="table-container"></div>
+
+    <button id="submit-button">Confirm Listing</button>
+
+    <div id="final-table-container" class="final-table-container">
+        <h3>Phones listed for sale</h3>
+    </div>
+</section>
+{{ end }}

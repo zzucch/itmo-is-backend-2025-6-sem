@@ -1,0 +1,61 @@
+{{ define "content" }}
+<script src="/static/js/reviews.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/tsparticles@2.5.3/tsparticles.bundle.min.js"></script>
+<script src="/static/js/particles.js"></script>
+
+<section class="sale">
+    <div class="sale-banner">
+        <h3>{{.SalePhone.Name}}</h3>
+        <img src="{{.SalePhone.Image}}" alt="Sale banner">
+        <button type="button" class="sale-button">Get now</button>
+    </div>
+</section>
+
+<section class="new-phones">
+    <h2>New Phones</h2>
+    <div class="phone-grid">
+        {{range .NewPhones}}
+        <div class="phone-item">
+            <img src="{{.Image}}" alt="{{.Name}}">
+            <h3>{{.Name}}</h3>
+            <p>{{.Description}}</p>
+            <button type="button" class="get-now-button">Get now</button>
+        </div>
+        {{end}}
+    </div>
+</section>
+
+<section class="featured-phones">
+    <h2>Featured Phones</h2>
+    <div class="phone-grid">
+        {{range .FeaturedPhones}}
+        <div class="phone">
+            <img src="{{.Image}}" alt="{{.Name}}">
+            <h3>{{.Name}}</h3>
+            <p>{{.Description}}</p>
+            <p>{{.Price}}</p>
+        </div>
+        {{end}}
+    </div>
+    <button type="button" class="view-all-button">View all</button>
+</section>
+
+<section class="reviews">
+    <h2>Reviews</h2>
+    <div class="reviews-container"></div>
+    <div class="preloader">
+        <img src="/static/images/loading.gif" alt="Loading..." class="preloader-animation">
+    </div>
+    <button id="load-more-reviews" class="load-reviews-button">Load More Reviews</button>
+</section>
+
+<section class="newsletter">
+    <h2>Subscribe to the newsletter</h2>
+    <p>Be the first to know about our new and exclusive offers.</p>
+    <form action="#" method="post" class="newsletter-form">
+        <input type="email" name="email" placeholder="Enter your email" required>
+        <button type="submit">⇨</button>
+    </form>
+</section>
+{{ end }}

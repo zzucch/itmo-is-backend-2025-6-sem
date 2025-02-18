@@ -1,0 +1,24 @@
+{{ define "content" }}
+<script src="/static/js/load_speed.js"></script>
+<h2>under construction...</h2>
+<a href="/">go to the homepage</a>
+<br><br><br><br><br><br><br><br><br><br><br><br>
+
+<section class="cart">
+    <h2>Your Shopping Cart</h2>
+    <div class="cart-items">
+        <div class="cart-item">
+            <img src="/static/images/redmi-12-5g.webp" alt="Xiaomi Redmi 12 5G">
+            <h3>Xiaomi Redmi 12 5G</h3>
+            <p>Price: $199</p>
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" name="quantity" value="1" min="1">
+            <button type="button">Remove</button>
+        </div>
+    </div>
+    <div class="cart-summary">
+        <p>Total: $199</p>
+        <button type="button">Checkout</button>
+    </div>
+</section>
+{{ end }}

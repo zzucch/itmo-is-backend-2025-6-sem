@@ -1,0 +1,27 @@
+{{ define "layout" }}
+<!DOCTYPE html>
+<html lang="en">
+
+<script src="/static/js/common.js"></script>
+<script src="/static/js/active_page.js"></script>
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ block "title" . }}The Phone Marketplace{{ end }}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="/static/js/load_speed.js"></script>
+</head>
+
+<body>
+    {{template "header" .}}
+
+    <main>
+        {{ block "content" . }}{{ end }}
+    </main>
+
+    {{template "footer" .}}
+
+</body>
+
+</html>
+{{ end }}
