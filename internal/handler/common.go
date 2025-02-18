@@ -13,8 +13,8 @@ func HandleCommon(
 	request *http.Request,
 	handlerTemplate string,
 ) {
-	authParam := request.URL.Query().Get("auth")
-	isAuthorized := strings.ToLower(authParam) == "true"
+	authParameter := request.URL.Query().Get("auth")
+	isAuthorized := strings.ToLower(authParameter) == "true"
 
 	data.Data.IsAuthorized = isAuthorized
 
