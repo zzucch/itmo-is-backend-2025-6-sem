@@ -10,6 +10,10 @@ import (
 func main() {
 	address := ":14041"
 
+	if err := deploy.Deploy(); err != nil {
+		log.Fatal()
+	}
+
 	log.Printf("server is running on %s", address)
 	http.ListenAndServe(address, deploy.Setup())
 }

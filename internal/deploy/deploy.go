@@ -1,99 +1,44 @@
 package deploy
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"os/exec"
 	"strings"
-	"sync/atomic"
+
+	"github.com/is-web-y26/m3302-milovatskiy/internal/config"
 )
 
-func Setup() *http.ServeMux {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/deploy", Deploy)
-
-	return mux
-}
-
-var deployingInProgress atomic.Bool
-
-func Deploy(responseWriter http.ResponseWriter, request *http.Request) {
-	if !deployingInProgress.CompareAndSwap(false, true) {
-		http.Error(
-			responseWriter,
-			"deployment in progress",
-			http.StatusConflict,
-		)
-
-		return
-	}
-	defer deployingInProgress.Store(false)
-
+func Deploy() error {
 	const deployScriptPath = "./build/deploy.sh"
 	const runScriptPath = "./build/run.sh"
 
-	requesterInfo := map[string]any{
-		"remote_addr":    request.RemoteAddr,
-		"method":         request.Method,
-		"url":            request.URL.String(),
-		"host":           request.Host,
-		"proto":          request.Proto,
-		"headers":        request.Header,
-		"content_length": request.ContentLength,
-		"referer":        request.Referer(),
-		"user_agent":     request.UserAgent(),
-	}
-
-	requesterInfoJSON, err := json.Marshal(requesterInfo)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("deploy requested: %s", string(requesterInfoJSON))
-
-	if err := killProcessOnPort("3000"); err != nil {
-		log.Print(err)
-
-		http.Error(
-			responseWriter,
-			err.Error(),
-			http.StatusInternalServerError,
-		)
-
-		return
+	if err := killProcessOnPort(config.GetDefaultConfig().Port); err != nil {
+		return err
 	}
 
 	cmd := exec.Command("bash", deployScriptPath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Print(err)
-
-		http.Error(
-			responseWriter,
-			err.Error(),
-			http.StatusInternalServerError,
-		)
-
-		return
+		return err
 	}
+
+	log.Print(output)
 
 	cmd = exec.Command("bash", runScriptPath)
 	if err := cmd.Start(); err != nil {
-		log.Print(err)
-
-		http.Error(
-			responseWriter,
-			err.Error(),
-			http.StatusInternalServerError,
-		)
-
-		return
+		return err
 	}
 
-	responseWriter.Write(output)
+	go func(cmd *exec.Cmd) {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("error waiting: err=%v", err)
+		}
+
+		log.Print("waited")
+	}(cmd)
+
+	return nil
 }
 
 func killProcessOnPort(port string) error {
