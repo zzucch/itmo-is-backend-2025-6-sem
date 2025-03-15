@@ -51,6 +51,8 @@ func Deploy(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	log.Print("executing deploy script", scriptPath)
+
 	cmd := exec.Command("bash", scriptPath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -64,6 +66,8 @@ func Deploy(responseWriter http.ResponseWriter, request *http.Request) {
 
 		return
 	}
+
+	log.Printf("script output: %s", output)
 
 	responseWriter.Write(output)
 }
