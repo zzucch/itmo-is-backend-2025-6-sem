@@ -1,0 +1,22 @@
+name: Go Build
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Deploy
+        run: |
+          status_code=$(curl -s -o /dev/null -w "%{http_code}" http://38.180.195.167:14041/deploy)
+          if [ "$status_code" -eq 200 ]; then
+            echo "deployed"
+            exit 0
+          else
+            echo "error: $status_code"
+            exit 1
+          fi
