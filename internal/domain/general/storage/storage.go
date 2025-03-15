@@ -6,6 +6,7 @@ import (
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/notification"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -15,8 +16,37 @@ type Storage struct {
 	DB *gorm.DB
 }
 
+func (s *Storage) DeletePhone(id uint) error {
+	if id == 0 {
+		return errors.New("invalid ID")
+	}
+
+	result := s.DB.Delete(&general.Phone{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("phone not found")
+	}
+
+	return nil
+}
+
+func (s *Storage) FindAllPhones() ([]general.Phone, error) {
+	var phones []general.Phone
+	err := s.DB.Find(&phones).Error
+	if err != nil {
+		return nil, err
+	}
+	return phones, nil
+}
+
 func (s *Storage) CreatePhone(phone *general.Phone) error {
-	panic("unimplemented")
+	if phone == nil {
+		return errors.New("phone cannot be nil")
+	}
+	return s.DB.Create(phone).Error
 }
 
 func (s Storage) CreateCatalog(catalog *catalog.Catalog) error {
@@ -84,7 +114,7 @@ func New(dsn string) (*Storage, error) {
 		&general.Image{},
 		&Order{},
 		&catalog.Catalog{},
-		&Notification{},
+		&notification.Notification{},
 	); err != nil {
 		return nil, err
 	}
@@ -95,7 +125,7 @@ func New(dsn string) (*Storage, error) {
 		&general.Image{},
 		&Order{},
 		&catalog.Catalog{},
-		&Notification{},
+		&notification.Notification{},
 	); err != nil {
 		return nil, err
 	}

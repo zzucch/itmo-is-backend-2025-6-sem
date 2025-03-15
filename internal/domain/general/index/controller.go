@@ -9,13 +9,13 @@ import (
 )
 
 type Controller struct {
-	service  *catalog.CatalogService
+	service  *catalog.Service
 	pageData *pageData.IndexPageData
 	template *template.Template
 }
 
 func NewController(
-	service *catalog.CatalogService,
+	service *catalog.Service,
 	template *template.Template,
 ) *Controller {
 	return &Controller{

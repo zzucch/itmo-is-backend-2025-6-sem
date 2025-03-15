@@ -84,8 +84,8 @@ func initControllers(
 	}
 
 	sellService := sell.NewService(storage)
-	catalogService := catalog.NewCatalogService(storage)
-	cartService := &cart.CartService{}
+	catalogService := catalog.NewService(storage)
+	cartService := &cart.Service{}
 
 	return controllers{
 		index.NewController(catalogService, indexTemplate),

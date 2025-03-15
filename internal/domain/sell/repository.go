@@ -2,6 +2,8 @@ package sell
 
 import "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 
-type SellRepository interface {
+type Repository interface {
 	CreatePhone(phone *general.Phone) error
+	FindAllPhones() ([]general.Phone, error)
+	DeletePhone(id uint) error
 }

@@ -1,6 +1,6 @@
 package catalog
 
-type CatalogRepository interface {
+type Repository interface {
 	FindAllCatalogs() ([]Catalog, error)
 	FindCatalogByID(id uint) (*Catalog, error)
 	CreateCatalog(catalog *Catalog) error

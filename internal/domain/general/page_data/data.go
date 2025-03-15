@@ -41,6 +41,7 @@ func NewCartPageData() *CartPageData {
 
 type SellPageData struct {
 	*CommonPageData
+	SellPhones []general.Phone
 }
 
 func NewSellPageData() *SellPageData {

@@ -1,3 +1,3 @@
 package cart
 
-type CartService struct{}
+type Service struct{}

@@ -11,9 +11,9 @@ func Setup(controllers controllers) *http.ServeMux {
 	mux.HandleFunc("/catalog", controllers.catalogController.Handle)
 	mux.HandleFunc("/cart", controllers.cartController.Handle)
 	mux.HandleFunc("/sell", controllers.sellController.Handle)
-	// mux.HandleFunc("/login", handler.HandleLogin)
-	// mux.HandleFunc("/signup", handler.HandleLogin)
-	// mux.HandleFunc("/signout", handler.HandleLogout)
+	mux.HandleFunc("/delete/{id}", controllers.sellController.HandleDelete)
+	mux.HandleFunc("/create", controllers.sellController.HandleCreate)
+	mux.HandleFunc("/phones", controllers.sellController.HandleGetAll)
 
 	mux.Handle(
 		"/static/",

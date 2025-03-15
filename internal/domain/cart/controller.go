@@ -8,13 +8,13 @@ import (
 )
 
 type Controller struct {
-	service  *CartService
+	service  *Service
 	pageData *pageData.CartPageData
 	template *template.Template
 }
 
 func NewController(
-	service *CartService,
+	service *Service,
 	template *template.Template,
 ) *Controller {
 	return &Controller{

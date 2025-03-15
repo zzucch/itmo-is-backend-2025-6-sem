@@ -1,4 +1,4 @@
-package storage
+package notification
 
 import (
 	"time"

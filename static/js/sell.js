@@ -1,35 +1,46 @@
 const specifications = [
-  "Processor frequency",
+  "Name",
+  "Description",
+  "Brand",
+  "CPU",
+  "ScreenSize",
+  "Camera",
+  "Battery",
+  "Storage",
   "Price",
-  "Display size",
-  "Battery capacity",
+  "IsUsed",
+  "Issues",
+  "Condition",
 ];
 
 let currentSpecificationIndex = 0;
+let phoneDetails = {};
 
 function addSpecifications(event) {
   event.preventDefault();
 
   const specification = specifications[currentSpecificationIndex];
+  let value = document.getElementById("value").value.trim();
+
+  if (!value) {
+    alert("Please enter a value for the specification.");
+    return;
+  }
+
+  if (specification === "IsUsed") {
+    value = value.toLowerCase() === "true";
+  } else if (specification === "Price") {
+    value = parseFloat(value);
+    if (isNaN(value)) {
+      alert("Please enter a valid price.");
+      return;
+    }
+  }
+
+  phoneDetails[specification] = value;
   currentSpecificationIndex++;
 
-  const value = document.getElementById("value").value;
-
-  const tableContainer = document.getElementById("table-container");
-  const row = document.createElement("div");
-  row.className = "row";
-
-  const keyDiv = document.createElement("div");
-  keyDiv.className = "key";
-  keyDiv.textContent = specification;
-
-  const valueDiv = document.createElement("div");
-  valueDiv.className = "value";
-  valueDiv.textContent = value;
-
-  row.appendChild(keyDiv);
-  row.appendChild(valueDiv);
-  tableContainer.appendChild(row);
+  updateTable();
 
   if (currentSpecificationIndex < specifications.length) {
     document.getElementById("specification-display").textContent =
@@ -42,49 +53,79 @@ function addSpecifications(event) {
   document.getElementById("value").value = "";
 }
 
-function deletePhone(index) {
-  const phones = JSON.parse(localStorage.getItem("phones")) || [];
+function updateTable() {
+  const tableContainer = document.getElementById("table-container");
+  tableContainer.innerHTML = "";
 
-  phones.splice(index, 1);
-  localStorage.setItem("phones", JSON.stringify(phones));
+  Object.entries(phoneDetails).forEach(([key, value]) => {
+    const row = document.createElement("div");
+    row.className = "row";
 
-  loadPhonesFromLocalStorage();
+    const keyDiv = document.createElement("div");
+    keyDiv.className = "key";
+    keyDiv.textContent = key;
+
+    const valueDiv = document.createElement("div");
+    valueDiv.className = "value";
+    valueDiv.textContent = value;
+
+    row.appendChild(keyDiv);
+    row.appendChild(valueDiv);
+    tableContainer.appendChild(row);
+  });
 }
 
-function confirmListing() {
-  const rows = document.querySelectorAll("#table-container .row");
+async function confirmListing() {
+  try {
+    const response = await fetch("/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(phoneDetails),
+    });
 
-  const phoneDetails = {};
-  rows.forEach((row) => {
-    const key = row.querySelector(".key").textContent;
-    const value = row.querySelector(".value").textContent;
-    phoneDetails[key] = value;
-  });
+    if (response.ok) {
+      document.getElementById("success-message").style.display = "block";
+      setTimeout(() => {
+        document.getElementById("success-message").style.display = "none";
+      }, 3000);
 
-  const phones = JSON.parse(localStorage.getItem("phones")) || [];
-  phones.push(phoneDetails);
-  localStorage.setItem("phones", JSON.stringify(phones));
+      resetForm();
+    } else {
+      alert("Failed to submit phone listing. Please try again later.");
+    }
+  } catch (error) {
+    console.error("Error submitting phone:", error);
+    alert(
+      "An error occurred while submitting your phone listing. Please try again.",
+    );
+  }
+}
 
-  document.getElementById("success-message").style.display = "block";
-  setTimeout(() => {
-    document.getElementById("success-message").style.display = "none";
-  }, 3000);
-
-  document.getElementById("table-container").innerHTML = "";
-  document.getElementById("add-specification-form").style.display = "block";
-  document.getElementById("submit-button").style.display = "none";
-
+function resetForm() {
+  phoneDetails = {};
   currentSpecificationIndex = 0;
   document.getElementById("specification-display").textContent =
     specifications[currentSpecificationIndex];
-
-  loadPhonesFromLocalStorage();
+  document.getElementById("add-specification-form").style.display = "block";
+  document.getElementById("submit-button").style.display = "none";
+  document.getElementById("table-container").innerHTML = "";
 }
 
-function loadPhonesFromLocalStorage() {
-  const phones = JSON.parse(localStorage.getItem("phones")) || [];
-  const finalTableContainer = document.getElementById("final-table-container");
+async function fetchPhones() {
+  try {
+    const response = await fetch("/phones");
+    if (!response.ok) throw new Error("Failed to fetch phones.");
 
+    const phones = await response.json();
+    displayPhones(phones);
+  } catch (error) {
+    console.error("Error fetching phones:", error);
+    alert("Failed to load phones. Please try again later.");
+  }
+}
+
+function displayPhones(phones) {
+  const finalTableContainer = document.getElementById("final-table-container");
   finalTableContainer.innerHTML = "";
 
   if (phones.length === 0) {
@@ -94,7 +135,7 @@ function loadPhonesFromLocalStorage() {
 
   finalTableContainer.style.display = "block";
 
-  phones.forEach((phone, index) => {
+  phones.forEach((phone) => {
     const phoneEntry = document.createElement("div");
     phoneEntry.className = "final-phone";
 
@@ -120,14 +161,33 @@ function loadPhonesFromLocalStorage() {
     const deleteButton = document.createElement("button");
     deleteButton.className = "delete-button";
     deleteButton.textContent = "Delete";
-    deleteButton.onclick = () => deletePhone(index);
+    deleteButton.onclick = () => deletePhone(phone.ID);
 
     phoneEntry.appendChild(deleteButton);
     finalTableContainer.appendChild(phoneEntry);
   });
 }
 
-window.onload = function () {
+function deletePhone(phoneId) {
+  console.log("deleting!", phoneId);
+
+  fetch(`/delete/${phoneId}`, {
+    method: "DELETE",
+  })
+    .then((response) => {
+      if (response.ok) {
+        fetchPhones();
+      } else {
+        alert("Failed to delete phone. Please try again.");
+      }
+    })
+    .catch((error) => {
+      console.error("Error deleting phone:", error);
+      alert("An error occurred while deleting the phone.");
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("specification-display").textContent =
     specifications[currentSpecificationIndex];
 
@@ -138,5 +198,5 @@ window.onload = function () {
     .getElementById("submit-button")
     .addEventListener("click", confirmListing);
 
-  loadPhonesFromLocalStorage();
-};
+  fetchPhones();
+});
