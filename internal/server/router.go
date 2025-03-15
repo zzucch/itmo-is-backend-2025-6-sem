@@ -14,6 +14,8 @@ func Setup(controllers controllers) *http.ServeMux {
 	mux.HandleFunc("/delete/{id}", controllers.sellController.HandleDelete)
 	mux.HandleFunc("/create", controllers.sellController.HandleCreate)
 	mux.HandleFunc("/phones", controllers.sellController.HandleGetAll)
+	mux.HandleFunc("/notifications", controllers.notificationsHandler)
+	mux.HandleFunc("/sse", controllers.notificationsSSEHandler)
 
 	mux.Handle(
 		"/static/",

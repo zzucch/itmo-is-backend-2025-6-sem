@@ -69,6 +69,7 @@ var DefaultData = CommonPageData{
 		{Name: "Sell", URL: "/sell"},
 		{Name: "Contacts", URL: "#contacts"},
 		{Name: "Cart", URL: "/cart"},
+		{Name: "notifications", URL: "/notifications"},
 	},
 	IsAuthorized: false,
 }

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>notifications</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3.10.0/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3.10.0/notyf.min.js"></script>
+</head>
+
+<body>
+    <h2>notifications</h2>
+    wow so cool
+
+    <script>
+        const notyf = new Notyf();
+        const eventSource = new EventSource("/sse");
+
+        eventSource.onmessage = function (event) {
+            notyf.open({
+                type: "info",
+                message: event.data,
+                background: '#008',
+            });
+        };
+
+        eventSource.onerror = function (event) {
+            console.error("eventsource failed:", event);
+        };
+    </script>
+</body>
+
+</html>
