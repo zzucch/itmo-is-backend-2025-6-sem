@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-cd ..
-
 git stash
 git pull
 
