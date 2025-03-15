@@ -16,6 +16,7 @@ func Setup(controllers controllers) *http.ServeMux {
 	mux.HandleFunc("/phones", controllers.sellController.HandleGetAll)
 	mux.HandleFunc("/notifications", controllers.notificationsHandler)
 	mux.HandleFunc("/sse", controllers.notificationsSSEHandler)
+	http.HandleFunc("/order", controllers.cartController.HandleOrder)
 
 	mux.Handle(
 		"/static/",

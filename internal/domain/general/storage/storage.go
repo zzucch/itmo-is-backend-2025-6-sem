@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os/user"
 
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/cart"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/notification"
@@ -112,7 +113,7 @@ func New(dsn string) (*Storage, error) {
 		&user.User{},
 		&general.Phone{},
 		&general.Image{},
-		&Order{},
+		&cart.Order{},
 		&catalog.Catalog{},
 		&notification.Notification{},
 	); err != nil {
@@ -123,7 +124,7 @@ func New(dsn string) (*Storage, error) {
 		&user.User{},
 		&general.Phone{},
 		&general.Image{},
-		&Order{},
+		&cart.Order{},
 		&catalog.Catalog{},
 		&notification.Notification{},
 	); err != nil {
