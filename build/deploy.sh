@@ -4,4 +4,3 @@ git stash
 git pull
 
 go build cmd/marketplace/main.go
-nohup ./main &

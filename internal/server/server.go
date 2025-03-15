@@ -11,7 +11,7 @@ import (
 func Start(logger *log.Logger, config *config.Config) error {
 	address := fmt.Sprintf(":%s", config.Port)
 
-	log.Printf("server is running on %s", address)
+	logger.Printf("server is running on %s", address)
 	http.ListenAndServe(address, Setup())
 
 	return nil

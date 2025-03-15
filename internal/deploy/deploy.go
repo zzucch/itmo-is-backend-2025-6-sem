@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 	"strings"
+	"sync/atomic"
 )
 
 func Setup() *http.ServeMux {
@@ -17,8 +18,22 @@ func Setup() *http.ServeMux {
 	return mux
 }
 
+var deployingInProgress atomic.Bool
+
 func Deploy(responseWriter http.ResponseWriter, request *http.Request) {
-	const scriptPath = "./build/deploy.sh"
+	if !deployingInProgress.CompareAndSwap(false, true) {
+		http.Error(
+			responseWriter,
+			"deployment in progress",
+			http.StatusConflict,
+		)
+
+		return
+	}
+	defer deployingInProgress.Store(false)
+
+	const deployScriptPath = "./build/deploy.sh"
+	const runScriptPath = "./build/run.sh"
 
 	requesterInfo := map[string]any{
 		"remote_addr":    request.RemoteAddr,
@@ -51,9 +66,7 @@ func Deploy(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	log.Print("executing deploy script", scriptPath)
-
-	cmd := exec.Command("bash", scriptPath)
+	cmd := exec.Command("bash", deployScriptPath)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Print(err)
@@ -67,15 +80,24 @@ func Deploy(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	log.Printf("script output: %s", output)
+	cmd = exec.Command("bash", runScriptPath)
+	if err := cmd.Start(); err != nil {
+		log.Print(err)
+
+		http.Error(
+			responseWriter,
+			err.Error(),
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
 
 	responseWriter.Write(output)
 }
 
 func killProcessOnPort(port string) error {
 	cmd := exec.Command("lsof", "-i", ":"+port, "-t")
-
-	log.Printf("killing process on port=%s", port)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
