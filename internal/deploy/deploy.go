@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,6 +19,25 @@ func Setup() *http.ServeMux {
 
 func Deploy(responseWriter http.ResponseWriter, request *http.Request) {
 	const scriptPath = "./build/deploy.sh"
+
+	requesterInfo := map[string]any{
+		"remote_addr":    request.RemoteAddr,
+		"method":         request.Method,
+		"url":            request.URL.String(),
+		"host":           request.Host,
+		"proto":          request.Proto,
+		"headers":        request.Header,
+		"content_length": request.ContentLength,
+		"referer":        request.Referer(),
+		"user_agent":     request.UserAgent(),
+	}
+
+	requesterInfoJSON, err := json.Marshal(requesterInfo)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("deploy requested: %s", string(requesterInfoJSON))
 
 	if err := killProcessOnPort("3000"); err != nil {
 		log.Print(err)
@@ -51,10 +71,12 @@ func Deploy(responseWriter http.ResponseWriter, request *http.Request) {
 func killProcessOnPort(port string) error {
 	cmd := exec.Command("lsof", "-i", ":"+port, "-t")
 
+	log.Printf("killing process on port=%s", port)
+
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		if strings.Contains(err.Error(), "exit status 1") {
-			log.Printf("no process found on port=%s\n", port)
+			log.Printf("no process found on port=%s", port)
 			return nil
 		}
 
@@ -63,7 +85,7 @@ func killProcessOnPort(port string) error {
 
 	pids := strings.Fields(string(output))
 	if len(pids) == 0 {
-		log.Printf("no process found on port=%s\n", port)
+		log.Printf("no process found on port=%s", port)
 		return nil
 	}
 
@@ -74,7 +96,7 @@ func killProcessOnPort(port string) error {
 			return fmt.Errorf("failed to kill process pid=%s: %v", pid, err)
 		}
 
-		log.Printf("killed process pid=%s port=%s\n", pid, port)
+		log.Printf("killed process pid=%s port=%s", pid, port)
 	}
 
 	return nil
