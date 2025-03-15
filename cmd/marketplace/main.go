@@ -19,7 +19,7 @@ func main() {
 }
 
 func initLogger() *log.Logger {
-	const logDir = "./logs"
+	const logDir = "./logs/"
 
 	if err := os.MkdirAll(logDir, os.ModePerm); err != nil {
 		log.Fatal(err)
