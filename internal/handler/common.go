@@ -30,6 +30,7 @@ func HandleCommon(
 			err.Error(),
 			http.StatusInternalServerError,
 		)
+
 		return
 	}
 
