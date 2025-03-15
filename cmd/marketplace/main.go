@@ -10,8 +10,9 @@ import (
 )
 
 func main() {
-	config := config.GetDefaultConfig()
 	logger := initLogger()
+
+	config := config.GetDefaultConfig(logger)
 
 	if err := server.Start(logger, config); err != nil {
 		log.Fatal(err)
@@ -33,5 +34,11 @@ func initLogger() *log.Logger {
 	const prefix = ""
 	const flags = log.LstdFlags | log.LUTC | log.Lmicroseconds
 
-	return log.New(file, prefix, flags)
+	logger := log.New(file, prefix, flags)
+
+	if os.Getenv("DEBUG") != "" {
+		logger = log.Default()
+	}
+
+	return logger
 }

@@ -3,14 +3,15 @@ package storage
 import (
 	"errors"
 
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 	"gorm.io/gorm"
 )
 
 type Order struct {
 	gorm.Model
-	UserID   uint
-	PhoneIDs []uint64
-	Status   OrderStatus
+	UserID uint
+	Phones []general.Phone `gorm:"many2many:order_phones;"`
+	Status OrderStatus
 }
 
 type OrderStatus string

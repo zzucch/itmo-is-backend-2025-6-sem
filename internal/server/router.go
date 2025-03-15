@@ -2,21 +2,18 @@ package server
 
 import (
 	"net/http"
-
-	"github.com/is-web-y26/m3302-milovatskiy/internal/handler"
 )
 
-func Setup() *http.ServeMux {
+func Setup(controllers controllers) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", handler.HandleIndex)
-	mux.HandleFunc("/catalog", handler.HandleCatalog)
-	mux.HandleFunc("/cart", handler.HandleCart)
-	mux.HandleFunc("/sell", handler.HandleSell)
-
-	mux.HandleFunc("/login", handler.HandleLogin)
-	mux.HandleFunc("/signup", handler.HandleLogin)
-	mux.HandleFunc("/signout", handler.HandleLogout)
+	mux.HandleFunc("/", controllers.indexController.Handle)
+	mux.HandleFunc("/catalog", controllers.catalogController.Handle)
+	mux.HandleFunc("/cart", controllers.cartController.Handle)
+	mux.HandleFunc("/sell", controllers.sellController.Handle)
+	// mux.HandleFunc("/login", handler.HandleLogin)
+	// mux.HandleFunc("/signup", handler.HandleLogin)
+	// mux.HandleFunc("/signout", handler.HandleLogout)
 
 	mux.Handle(
 		"/static/",

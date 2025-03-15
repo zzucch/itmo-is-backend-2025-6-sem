@@ -7,7 +7,7 @@
 <section class="sale">
     <div class="sale-banner">
         <h3>{{.SalePhone.Name}}</h3>
-        <img src="{{.SalePhone.Image}}" alt="Sale banner">
+        <img src="{{.SalePhone.Image.URL}}" alt="Sale banner">
         <button type="button" class="sale-button">Get now</button>
     </div>
 </section>
@@ -17,7 +17,7 @@
     <div class="phone-grid">
         {{range .NewPhones}}
         <div class="phone-item">
-            <img src="{{.Image}}" alt="{{.Name}}">
+            <img src="{{.Image.URL}}" alt="{{.Name}}">
             <h3>{{.Name}}</h3>
             <p>{{.Description}}</p>
             <button type="button" class="get-now-button">Get now</button>
@@ -31,7 +31,7 @@
     <div class="phone-grid">
         {{range .FeaturedPhones}}
         <div class="phone">
-            <img src="{{.Image}}" alt="{{.Name}}">
+            <img src="{{.Image.URL}}" alt="{{.Name}}">
             <h3>{{.Name}}</h3>
             <p>{{.Description}}</p>
             <p>{{.Price}}</p>

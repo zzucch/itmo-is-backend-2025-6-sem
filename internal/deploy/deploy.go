@@ -13,17 +13,14 @@ func Deploy() error {
 	const deployScriptPath = "./build/deploy.sh"
 	const runScriptPath = "./build/run.sh"
 
-	if err := killProcessOnPort(config.GetDefaultConfig().Port); err != nil {
+	if err := killProcessOnPort(config.GetDefaultConfig(log.Default()).Port); err != nil {
 		return err
 	}
 
 	cmd := exec.Command("bash", deployScriptPath)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return err
 	}
-
-	log.Print(output)
 
 	cmd = exec.Command("bash", runScriptPath)
 	if err := cmd.Start(); err != nil {

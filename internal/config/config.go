@@ -1,18 +1,32 @@
 package config
 
-import "os"
+import (
+	"log"
 
-type Config struct {
-	Port string
+	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
+)
+
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func GetDefaultConfig() *Config {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
+type Config struct {
+	Port string `env:"PORT"`
+	DSN  string `env:"DB_DSN"`
+}
+
+func GetDefaultConfig(logger *log.Logger) *Config {
+	config := &Config{}
+	if err := env.Parse(config); err != nil {
+		logger.Fatal(err)
 	}
 
-	return &Config{
-		Port: port,
+	if config.Port == "" {
+		config.Port = "3000"
 	}
+
+	return config
 }

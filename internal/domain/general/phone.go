@@ -1,4 +1,4 @@
-package storage
+package general
 
 import (
 	"errors"
@@ -8,19 +8,19 @@ import (
 
 type Phone struct {
 	gorm.Model
-	Name       string
-	Brand      string
-	CPU        string
-	ScreenSize string
-	Camera     string
-	Battery    string
-	Storage    string
-	Price      float64
-	IsUsed     bool
-	Condition  Condition
-	Issues     string
-	Image      Image
-	CatalogID  uint
+	Name        string
+	Description string
+	Brand       string
+	CPU         string
+	ScreenSize  string
+	Camera      string
+	Battery     string
+	Storage     string
+	Price       float64
+	IsUsed      bool
+	Issues      string
+	Condition
+	Image
 }
 
 type Condition string

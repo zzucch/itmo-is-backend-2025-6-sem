@@ -2,81 +2,40 @@
 <section class="new-phones">
     <h2>New Phones</h2>
     <div class="phone-grid">
+        {{range .NewPhones}}
         <div class="phone-item">
-            <img src="/static/images/redmi-12-5g.webp" alt="New Phone 1">
-            <h3>Xiaomi Redmi 12 5G</h3>
-            <p>Affordable swiftness</p>
+            <img src="{{.Image.URL}}" alt="{{.Name}}">
+            <h3>{{.Name}}</h3>
+            <p>{{.Description}}</p>
             <button type="button" class="get-now-button">Get now</button>
         </div>
-        <div class="phone-item">
-            <img src="/static/images/aquos-wish-4-2.jpg" alt="New Phone 3">
-            <h3>Sharp Aquos Wish 4</h3>
-            <p>Refreshingly simple</p>
-            <button type="button" class="get-now-button">Get now</button>
-        </div>
-        <div class="phone-item">
-            <img src="/static/images/galaxy-z-fold6.jpg" alt="New Phone 2">
-            <h3>Samsung Galaxy Z Fold6</h3>
-            <p>Unfold possibilities</p>
-            <button type="button" class="get-now-button">Get now</button>
-        </div>
-        <div class="phone-item">
-            <img src="/static/images/pixel-9.webp" alt="New Phone 4">
-            <h3>Google Pixel 9</h3>
-            <p>Oxydizingly cutting-edge</p>
-            <button type="button" class="get-now-button">Get now</button>
-        </div>
+        {{end}}
     </div>
 </section>
+
 <section class="featured-phones">
     <h2>Featured Phones</h2>
     <div class="phone-grid">
+        {{range .FeaturedPhones}}
         <div class="phone">
-            <img src="/static/images/digno-902kc.jpeg" alt="Featured phone 1">
-            <h3>Kyocera 902KC</h3>
-            <p>A phone. Buy it.</p>
-            <p>$399</p>
+            <img src="{{.Image.URL}}" alt="{{.Name}}">
+            <h3>{{.Name}}</h3>
+            <p>{{.Description}}</p>
+            <p>{{.Price}}</p>
         </div>
-        <div class="phone">
-            <img src="/static/images/aquos-601sh.jpg" alt="Featured phone 2">
-            <h3>Sharp Aquos 601SH</h3>
-            <p>A phone. Buy it.</p>
-            <p>$499</p>
-        </div>
-        <div class="phone">
-            <img src="/static/images/siemens-a50.jpeg" alt="Featured phone 3">
-            <h3>Siemens A50</h3>
-            <p>A phone. Buy it.</p>
-            <p>$499</p>
-        </div>
-        <div class="phone">
-            <img src="/static/images/kyocera-kyf43.jpg" alt="Featured phone 4">
-            <h3>Kyocera KYF43</h3>
-            <p>A phone. Buy it.</p>
-            <p>$499</p>
-        </div>
-        <div class="phone">
-            <img src="/static/images/au-marvera-kyy08.jpg" alt="Featured phone 5">
-            <h3>Kyocera 414 Au Marvera</h3>
-            <p>A phone. Buy it.</p>
-            <p>$499</p>
-        </div>
-        <div class="phone">
-            <img src="/static/images/blackberrry-key2.jpg" alt="Featured phone 6">
-            <h3>Blackberry Key2</h3>
-            <p>A phone. Buy it.</p>
-            <p>$499</p>
-        </div>
+        {{end}}
     </div>
     <button type="button" class="view-all-button">View all</button>
 </section>
+
 <section class="sale">
     <div class="sale-banner">
-        <h3>Sharp Aquos wish4</h3>
-        <img src="/static/images/aquos-wish-4-1.jpg" alt="Sale banner">
+        <h3>{{.SalePhone.Name}}</h3>
+        <img src="{{.SalePhone.Image.URL}}" alt="Sale banner">
         <button type="button" class="sale-button">Get now</button>
     </div>
 </section>
+
 <section class="newsletter">
     <h2>Subscribe to the newsletter</h2>
     <p>Be the first to know about our new and exclusive offers.</p>

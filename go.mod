@@ -3,6 +3,8 @@ module github.com/is-web-y26/m3302-milovatskiy
 go 1.23.5
 
 require (
+	github.com/caarlos0/env/v11 v11.3.1
+	github.com/joho/godotenv v1.5.1
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
 )
