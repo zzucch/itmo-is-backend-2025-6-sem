@@ -21,6 +21,7 @@ type Phone struct {
 	Issues      string
 	Condition
 	Image
+	SellerID uint
 }
 
 type Condition string

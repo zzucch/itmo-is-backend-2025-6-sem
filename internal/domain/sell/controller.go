@@ -68,6 +68,14 @@ func (c *Controller) HandleCreate(
 		return
 	}
 
+	userID, ok := request.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(responseWriter, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	phone.SellerID = userID
+
 	if err := c.service.CreatePhone(&phone); err != nil {
 		http.Error(
 			responseWriter,
@@ -83,7 +91,7 @@ func (c *Controller) HandleCreate(
 
 func (c *Controller) HandleGetAll(
 	responseWriter http.ResponseWriter,
-	_ *http.Request,
+	r *http.Request,
 ) {
 	phones, err := c.service.FindAllPhones()
 	if err != nil {
@@ -96,8 +104,21 @@ func (c *Controller) HandleGetAll(
 		return
 	}
 
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(responseWriter, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userPhones := make([]general.Phone, 0, len(phones))
+	for _, phone := range phones {
+		if phone.SellerID == userID {
+			userPhones = append(userPhones, phone)
+		}
+	}
+
 	responseWriter.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(responseWriter).Encode(phones)
+	json.NewEncoder(responseWriter).Encode(userPhones)
 }
 
 func (c *Controller) HandleDelete(
@@ -122,6 +143,23 @@ func (c *Controller) HandleDelete(
 			"invalid phone ID",
 			http.StatusBadRequest,
 		)
+		return
+	}
+
+	userID, ok := request.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(responseWriter, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	phone, err := c.service.repository.FindPhoneByID(uint(phoneID))
+	if err != nil {
+		http.Error(responseWriter, "phone does not exist", http.StatusBadRequest)
+		return
+	}
+
+	if phone.SellerID != userID {
+		http.Error(responseWriter, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 

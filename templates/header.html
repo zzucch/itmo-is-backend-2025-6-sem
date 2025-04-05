@@ -6,13 +6,11 @@
             {{range .MenuLinks}}
             <li><a href="{{.URL}}">{{.Name}}</a></li>
             {{end}}
-
-            {{if .IsAuthorized}}
-            <li><a href="/signout">Sign out</a></li>
-            {{else}}
-            <li><a href="/login">Log in</a></li>
-            <li><a href="/signup">Sign up</a></li>
-            {{end}}
+            <li class="auth-section">
+                <span id="auth-links">
+                    <span class="loading-auth">Loading...</span>
+                </span>
+            </li>
         </ul>
     </nav>
 </header>

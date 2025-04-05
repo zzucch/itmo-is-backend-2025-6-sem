@@ -77,7 +77,7 @@ function updateTable() {
 
 async function confirmListing() {
   try {
-    const response = await fetch("/create", {
+    const response = await fetch("/api/phones", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(phoneDetails),
@@ -91,13 +91,11 @@ async function confirmListing() {
 
       resetForm();
     } else {
-      alert("Failed to submit phone listing. Please try again later.");
+      const text = await response.text();
+      alert(text);
     }
   } catch (error) {
-    console.error("Error submitting phone:", error);
-    alert(
-      "An error occurred while submitting your phone listing. Please try again.",
-    );
+    alert(error);
   }
 }
 
@@ -113,14 +111,16 @@ function resetForm() {
 
 async function fetchPhones() {
   try {
-    const response = await fetch("/phones");
-    if (!response.ok) throw new Error("Failed to fetch phones.");
+    const response = await fetch("/api/phones");
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text);
+    }
 
     const phones = await response.json();
     displayPhones(phones);
   } catch (error) {
-    console.error("Error fetching phones:", error);
-    alert("Failed to load phones. Please try again later.");
+    alert(error);
   }
 }
 
@@ -171,7 +171,7 @@ function displayPhones(phones) {
 function deletePhone(phoneId) {
   console.log("deleting!", phoneId);
 
-  fetch(`/delete/${phoneId}`, {
+  fetch(`/api/phones/${phoneId}`, {
     method: "DELETE",
   })
     .then((response) => {

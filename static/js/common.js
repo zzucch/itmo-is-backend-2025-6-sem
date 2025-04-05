@@ -19,3 +19,35 @@ document.addEventListener("DOMContentLoaded", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 });
+
+document.addEventListener("DOMContentLoaded", async function () {
+  try {
+    const response = await fetch("/api/users/me", {
+      credentials: "same-origin",
+    });
+
+    if (response.ok) {
+      const user = await response.json();
+      console.log("Authenticated as:", user.username);
+    }
+  } catch (error) {
+    console.error("Error checking auth status:", error);
+  }
+});
+
+document.querySelectorAll(".get-now-button, .sale-button").forEach((button) => {
+  button.addEventListener("click", async function () {
+    try {
+      const response = await fetch("/api/users/me", {
+        credentials: "same-origin",
+      });
+
+      if (!response.ok) {
+        window.location.href = "/login";
+        return;
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  });
+});

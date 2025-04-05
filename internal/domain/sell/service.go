@@ -14,6 +14,10 @@ func (s *Service) FindAllPhones() ([]general.Phone, error) {
 	return s.repository.FindAllPhones()
 }
 
+func (s *Service) GetPhoneByID(id uint) (*general.Phone, error) {
+	return s.repository.FindPhoneByID(id)
+}
+
 func (s *Service) CreatePhone(phone *general.Phone) error {
 	if err := general.ValidateCondition(phone.Condition); err != nil {
 		return err

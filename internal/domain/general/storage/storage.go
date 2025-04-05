@@ -2,12 +2,12 @@ package storage
 
 import (
 	"errors"
-	"os/user"
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/cart"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/notification"
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/user"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -15,6 +15,112 @@ import (
 
 type Storage struct {
 	DB *gorm.DB
+}
+
+func (s *Storage) FindPhoneByID(id uint) (*general.Phone, error) {
+	if id == 0 {
+		return nil, errors.New("invalid ID")
+	}
+	var phone general.Phone
+	err := s.DB.First(&phone, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &phone, nil
+}
+
+func (s *Storage) CreateUser(user *user.User) error {
+	if user == nil {
+		return errors.New("user cannot be nil")
+	}
+	return s.DB.Create(user).Error
+}
+
+func (s *Storage) FindUserByID(id uint) (*user.User, error) {
+	if id == 0 {
+		return nil, errors.New("invalid ID")
+	}
+	var user user.User
+	err := s.DB.First(&user, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (s *Storage) FindUserByUsername(username string) (*user.User, error) {
+	if username == "" {
+		return nil, errors.New("username cannot be empty")
+	}
+	var user user.User
+	err := s.DB.Where("username = ?", username).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (s *Storage) UpdateUser(user *user.User) error {
+	if user == nil {
+		return errors.New("user cannot be nil")
+	}
+	return s.DB.Save(user).Error
+}
+
+func (s *Storage) DeleteUser(id uint) error {
+	if id == 0 {
+		return errors.New("invalid ID")
+	}
+	result := s.DB.Delete(&user.User{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+	return nil
+}
+
+func (s *Storage) CreateToken(token *user.Token) error {
+	if token == nil {
+		return errors.New("token cannot be nil")
+	}
+	return s.DB.Create(token).Error
+}
+
+func (s *Storage) FindToken(tokenString string) (*user.Token, error) {
+	if tokenString == "" {
+		return nil, errors.New("token string cannot be empty")
+	}
+	var token user.Token
+	err := s.DB.Where("token = ?", tokenString).First(&token).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &token, nil
+}
+
+func (s *Storage) DeleteToken(tokenString string) error {
+	if tokenString == "" {
+		return errors.New("token string cannot be empty")
+	}
+	result := s.DB.Where("token = ?", tokenString).Delete(&user.Token{})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 func (s *Storage) DeletePhone(id uint) error {
@@ -122,9 +228,10 @@ func New(dsn string) (*Storage, error) {
 
 	if err := db.AutoMigrate(
 		&user.User{},
+		&user.Token{},
+		&cart.Order{},
 		&general.Phone{},
 		&general.Image{},
-		&cart.Order{},
 		&catalog.Catalog{},
 		&notification.Notification{},
 	); err != nil {

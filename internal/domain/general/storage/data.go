@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"time"
+
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/user"
 )
 
 func (s *Storage) AddData() {
@@ -17,6 +20,19 @@ func (s *Storage) AddData() {
 		},
 	}
 	s.DB.Create(&salePhone)
+
+	userQwe := user.User{
+		Username: "qwe",
+		Email:    "q@we",
+		PasswordHash: func() string {
+			hash, _ := user.HashPassword("qwe")
+			return hash
+		}(),
+		LastLogin: time.Now(),
+		Cart:      []general.Phone{},
+		Tokens:    []user.Token{},
+	}
+	s.DB.Create(&userQwe)
 
 	newPhones := []general.Phone{
 		{

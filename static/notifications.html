@@ -14,7 +14,7 @@
 
     <script>
         const notyf = new Notyf();
-        const eventSource = new EventSource("/sse");
+        const eventSource = new EventSource("/api/sse");
 
         eventSource.onmessage = function (event) {
             notyf.open({

@@ -6,4 +6,7 @@ type Repository interface {
 	FindUserByUsername(username string) (*User, error)
 	UpdateUser(user *User) error
 	DeleteUser(id uint) error
+	CreateToken(token *Token) error
+	FindToken(tokenString string) (*Token, error)
+	DeleteToken(tokenString string) error
 }
