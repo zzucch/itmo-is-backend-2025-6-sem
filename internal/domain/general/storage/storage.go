@@ -17,6 +17,34 @@ type Storage struct {
 	DB *gorm.DB
 }
 
+func (s *Storage) GetAllUsers() ([]*user.User, error) {
+	var users []*user.User
+	err := s.DB.Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
+func (s *Storage) UpdatePhone(phone *general.Phone) error {
+	if phone == nil {
+		return errors.New("phone cannot be nil")
+	}
+	if phone.ID == 0 {
+		return errors.New("invalid phone ID")
+	}
+
+	var existingPhone general.Phone
+	if err := s.DB.First(&existingPhone, phone.ID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("phone not found")
+		}
+		return err
+	}
+
+	return s.DB.Save(phone).Error
+}
+
 func (s *Storage) FindPhoneByID(id uint) (*general.Phone, error) {
 	if id == 0 {
 		return nil, errors.New("invalid ID")

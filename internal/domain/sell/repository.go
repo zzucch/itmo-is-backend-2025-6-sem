@@ -7,4 +7,5 @@ type Repository interface {
 	FindAllPhones() ([]general.Phone, error)
 	FindPhoneByID(id uint) (*general.Phone, error)
 	DeletePhone(id uint) error
+	UpdatePhone(phone *general.Phone) error
 }

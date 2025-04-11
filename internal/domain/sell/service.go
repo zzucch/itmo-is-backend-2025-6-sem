@@ -29,3 +29,11 @@ func (s *Service) CreatePhone(phone *general.Phone) error {
 func (s *Service) DeletePhone(id uint) error {
 	return s.repository.DeletePhone(id)
 }
+
+func (s *Service) UpdatePhone(phone *general.Phone) error {
+	if err := general.ValidateCondition(phone.Condition); err != nil {
+		return err
+	}
+
+	return s.repository.UpdatePhone(phone)
+}

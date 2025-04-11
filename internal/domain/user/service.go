@@ -43,6 +43,10 @@ func (s *Service) DeleteUser(id uint) error {
 	return s.repository.DeleteUser(id)
 }
 
+func (s *Service) GetAllUsers() ([]*User, error) {
+	return s.repository.GetAllUsers()
+}
+
 func (s *Service) Signup(req SignupRequest) (*User, error) {
 	if req.Username == "" || req.Email == "" || req.Password == "" {
 		return nil, errors.New("username, email, and password are required")

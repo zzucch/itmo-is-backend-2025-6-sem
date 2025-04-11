@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"time"
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
@@ -15,6 +16,23 @@ type User struct {
 	LastLogin    time.Time
 	Cart         []general.Phone `gorm:"many2many:user_cart;"`
 	Tokens       []Token         `gorm:"foreignKey:UserID"`
+	Role
+}
+
+type Role string
+
+const (
+	RoleUser  Role = "user"
+	RoleAdmin Role = "admin"
+)
+
+func ValidateRole(role Role) error {
+	switch role {
+	case RoleUser, RoleAdmin:
+		return nil
+	default:
+		return errors.New("invalid role")
+	}
 }
 
 type LoginRequest struct {
@@ -26,4 +44,32 @@ type SignupRequest struct {
 	Username string
 	Email    string
 	Password string
+}
+
+type CreateUserRequest struct {
+	Username string
+	Email    string
+	Password string
+	Role     Role
+}
+
+type UserResponse struct {
+	ID       uint   `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}
+
+type LoginResponse struct {
+	User  *UserResponse `json:"user"`
+	Token string        `json:"token"`
+}
+
+type UpdateUserRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UpdateResponse struct {
+	Status string `json:"status"`
 }

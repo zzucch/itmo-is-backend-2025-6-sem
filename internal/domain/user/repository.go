@@ -4,6 +4,7 @@ type Repository interface {
 	CreateUser(user *User) error
 	FindUserByID(id uint) (*User, error)
 	FindUserByUsername(username string) (*User, error)
+	GetAllUsers() ([]*User, error)
 	UpdateUser(user *User) error
 	DeleteUser(id uint) error
 	CreateToken(token *Token) error
