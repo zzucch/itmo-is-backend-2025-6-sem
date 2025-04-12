@@ -122,6 +122,27 @@ func Setup(controllers controllers) http.Handler {
 			},
 		),
 	))
+	mux.HandleFunc("/api/users/me/cart", controllers.userController.AuthMiddleware(
+		func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				controllers.userController.GetCart(w, r)
+			case http.MethodPost:
+				controllers.userController.AddToCart(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		},
+	))
+	mux.HandleFunc("/api/users/me/cart/{phone_id}", controllers.userController.AuthMiddleware(
+		func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodDelete {
+				controllers.userController.RemoveFromCart(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		},
+	))
 	mux.HandleFunc("/api/phones", controllers.userController.AuthMiddleware(
 		controllers.userController.AdminMiddleware(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -154,7 +175,7 @@ func Setup(controllers controllers) http.Handler {
 			},
 		),
 	))
-	mux.HandleFunc("api/orders", controllers.userController.AuthMiddleware(
+	mux.HandleFunc("/api/orders", controllers.userController.AuthMiddleware(
 		controllers.userController.AdminMiddleware(
 			func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
@@ -192,6 +213,36 @@ func Setup(controllers controllers) http.Handler {
 				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			}
 		},
+	))
+	mux.HandleFunc("/api/catalogs", controllers.userController.AuthMiddleware(
+		controllers.userController.AdminMiddleware(
+			func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodGet:
+					controllers.catalogController.HandleGetCatalogs(w, r)
+				case http.MethodPost:
+					controllers.catalogController.HandleCreateCatalog(w, r)
+				default:
+					http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				}
+			},
+		),
+	))
+	mux.HandleFunc("/api/catalogs/{id}", controllers.userController.AuthMiddleware(
+		controllers.userController.AdminMiddleware(
+			func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodDelete:
+					controllers.catalogController.HandleDeleteCatalog(w, r)
+				case http.MethodPut:
+					controllers.catalogController.HandleUpdateCatalog(w, r)
+				case http.MethodGet:
+					controllers.catalogController.HandleGetCatalogByID(w, r)
+				default:
+					http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				}
+			},
+		),
 	))
 
 	mux.HandleFunc("/api/sse", controllers.notificationsSSEHandler)

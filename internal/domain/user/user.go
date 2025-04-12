@@ -73,3 +73,17 @@ type UpdateUserRequest struct {
 type UpdateResponse struct {
 	Status string `json:"status"`
 }
+
+type AddToCartRequest struct {
+	PhoneID uint `json:"phone_id" validate:"required"`
+}
+
+type RemoveFromCartRequest struct {
+	PhoneID uint `json:"phone_id" validate:"required"`
+}
+
+type CartResponse struct {
+	Status  string          `json:"status"`
+	Message string          `json:"message,omitempty"`
+	Phones  []general.Phone `json:"phones,omitempty"`
+}

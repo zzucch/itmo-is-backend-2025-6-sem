@@ -28,6 +28,10 @@ func (s *Service) GetSalePhone() (general.Phone, error) {
 		return general.Phone{}, err
 	}
 
+	if catalog == nil {
+		return general.Phone{}, errors.New("does not exist")
+	}
+
 	if len(catalog.Phones) == 0 {
 		return general.Phone{}, nil
 	}
@@ -70,6 +74,10 @@ func (s *Service) GetCatalogByID(param any) (Catalog, error) {
 	catalog, err := s.repository.FindCatalogByID(id)
 	if err != nil {
 		return Catalog{}, err
+	}
+
+	if catalog == nil {
+		return Catalog{}, errors.New("catalog does not exist")
 	}
 
 	return *catalog, nil

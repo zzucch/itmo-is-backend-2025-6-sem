@@ -107,6 +107,24 @@ definitions:
       updatedAt:
         type: string
     type: object
+  internal_domain_user.AddToCartRequest:
+    properties:
+      phone_id:
+        type: integer
+    required:
+    - phone_id
+    type: object
+  internal_domain_user.CartResponse:
+    properties:
+      message:
+        type: string
+      phones:
+        items:
+          $ref: '#/definitions/github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone'
+        type: array
+      status:
+        type: string
+    type: object
   internal_domain_user.CreateUserRequest:
     properties:
       email:
@@ -943,6 +961,107 @@ paths:
       summary: modifies user profile
       tags:
       - users/me
+  /api/users/me/cart:
+    get:
+      description: Retrieves all phones in the authenticated user's cart
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user's cart
+      tags:
+      - users/me/cart
+    post:
+      description: Adds a phone to the authenticated user's cart
+      parameters:
+      - description: Phone ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_domain_user.AddToCartRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_domain_user.CartResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add phone to user's cart
+      tags:
+      - users/me/cart
+  /api/users/me/cart/{phone_id}:
+    delete:
+      description: Removes a phone from the authenticated user's cart
+      parameters:
+      - description: Phone ID
+        in: path
+        name: phone_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_domain_user.CartResponse'
+        "400":
+          description: Invalid phone ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove phone from user's cart
+      tags:
+      - users/me/cart
   /api/users/me/invalidate-tokens:
     post:
       description: Invalidates all active tokens for a user

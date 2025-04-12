@@ -1,5 +1,7 @@
 package user
 
+import "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
+
 type Repository interface {
 	CreateUser(user *User) error
 	FindUserByID(id uint) (*User, error)
@@ -11,4 +13,7 @@ type Repository interface {
 	FindToken(tokenString string) (*Token, error)
 	DeleteToken(tokenString string) error
 	DeleteExpiredTokens() error
+	RemovePhoneFromCart(userID uint, phoneID uint) error
+	AddPhoneToCart(userID uint, phoneID uint) error
+	FindPhoneByID(id uint) (*general.Phone, error)
 }

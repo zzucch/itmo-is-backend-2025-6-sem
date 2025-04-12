@@ -16,6 +16,56 @@ type Storage struct {
 	DB *gorm.DB
 }
 
+func (s *Storage) AddPhoneToCart(userID uint, phoneID uint) error {
+	var user user.User
+	if err := s.DB.First(&user, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	var phone general.Phone
+	if err := s.DB.First(&phone, phoneID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("phone not found")
+		}
+		return err
+	}
+
+	err := s.DB.Model(&user).Association("Cart").Append(&phone)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) RemovePhoneFromCart(userID uint, phoneID uint) error {
+	var user user.User
+	if err := s.DB.First(&user, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	var phone general.Phone
+	if err := s.DB.First(&phone, phoneID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("phone not found")
+		}
+		return err
+	}
+
+	err := s.DB.Model(&user).Association("Cart").Delete(&phone)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Storage) FindCatalogsByUserID(userID uint) ([]catalog.Catalog, error) {
 	if userID == 0 {
 		return nil, errors.New("invalid user ID")

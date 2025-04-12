@@ -534,12 +534,104 @@ func (c *Controller) AdminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if user.Role != RoleAdmin {
-			http.Error(w, "forbidden", http.StatusForbidden)
-			return
+		isAdmin := false
+		if user.Role == RoleAdmin {
+			isAdmin = true
 		}
 
-		ctx := context.WithValue(r.Context(), "is_admin", true)
+		ctx := context.WithValue(r.Context(), "is_admin", isAdmin)
 		next(w, r.WithContext(ctx))
 	}
+}
+
+// @Summary Add phone to user's cart
+// @Description Adds a phone to the authenticated user's cart
+// @Tags users/me/cart
+// @Router /api/users/me/cart [post]
+// @Security BearerAuth
+// @Param request body user.AddToCartRequest true "Phone ID"
+// @Success 200 {object} user.CartResponse
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+func (c *Controller) AddToCart(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		PhoneID uint `json:"phone_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := c.service.AddToCart(userID, req.PhoneID); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "added to cart"})
+}
+
+// @Summary Remove phone from user's cart
+// @Description Removes a phone from the authenticated user's cart
+// @Tags users/me/cart
+// @Router /api/users/me/cart/{phone_id} [delete]
+// @Security BearerAuth
+// @Param phone_id path int true "Phone ID"
+// @Success 200 {object} user.CartResponse
+// @Failure 400 {object} map[string]string "Invalid phone ID"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+func (c *Controller) RemoveFromCart(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	path := strings.TrimPrefix(r.URL.Path, "/api/users/me/cart/")
+	phoneID, err := strconv.Atoi(path)
+	if err != nil {
+		http.Error(w, "Invalid phone ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := c.service.RemoveFromCart(userID, uint(phoneID)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "removed from cart"})
+}
+
+// @Summary Get user's cart
+// @Description Retrieves all phones in the authenticated user's cart
+// @Tags users/me/cart
+// @Router /api/users/me/cart [get]
+// @Security BearerAuth
+// @Success 200 {array} github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+func (c *Controller) GetCart(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	cart, err := c.service.GetCart(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(cart)
 }

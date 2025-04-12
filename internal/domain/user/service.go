@@ -5,10 +5,42 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 )
 
 type Service struct {
 	repository Repository
+}
+
+func (s *Service) AddToCart(userID uint, phoneID uint) error {
+	_, err := s.repository.FindUserByID(userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+	phone, err := s.repository.FindPhoneByID(phoneID)
+	if err != nil || phone == nil {
+		return errors.New("phone not found")
+	}
+
+	return s.repository.AddPhoneToCart(userID, phoneID)
+}
+
+func (s *Service) RemoveFromCart(userID uint, phoneID uint) error {
+	_, err := s.repository.FindUserByID(userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	return s.repository.RemovePhoneFromCart(userID, phoneID)
+}
+
+func (s *Service) GetCart(userID uint) ([]general.Phone, error) {
+	user, err := s.repository.FindUserByID(userID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	return user.Cart, nil
 }
 
 func NewService(repository Repository) *Service {

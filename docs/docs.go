@@ -968,6 +968,165 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/users/me/cart": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves all phones in the authenticated user's cart",
+                "tags": [
+                    "users/me/cart"
+                ],
+                "summary": "Get user's cart",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Adds a phone to the authenticated user's cart",
+                "tags": [
+                    "users/me/cart"
+                ],
+                "summary": "Add phone to user's cart",
+                "parameters": [
+                    {
+                        "description": "Phone ID",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_domain_user.AddToCartRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_domain_user.CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/me/cart/{phone_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes a phone from the authenticated user's cart",
+                "tags": [
+                    "users/me/cart"
+                ],
+                "summary": "Remove phone from user's cart",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Phone ID",
+                        "name": "phone_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_domain_user.CartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid phone ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/users/me/invalidate-tokens": {
             "post": {
                 "security": [
@@ -1446,6 +1605,34 @@ const docTemplate = `{
                     }
                 },
                 "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_domain_user.AddToCartRequest": {
+            "type": "object",
+            "required": [
+                "phone_id"
+            ],
+            "properties": {
+                "phone_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_domain_user.CartResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "phones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone"
+                    }
+                },
+                "status": {
                     "type": "string"
                 }
             }

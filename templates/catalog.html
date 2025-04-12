@@ -7,7 +7,8 @@
             <img src="{{.Image.URL}}" alt="{{.Name}}">
             <h3>{{.Name}}</h3>
             <p>{{.Description}}</p>
-            <button type="button" class="get-now-button">Get now</button>
+            <button type="button" class="get-now-button" data-phone-id="{{.ID}}" onclick="addToCart(this)">Get
+                now</button>
         </div>
         {{end}}
     </div>
@@ -22,6 +23,8 @@
             <h3>{{.Name}}</h3>
             <p>{{.Description}}</p>
             <p>{{.Price}}</p>
+            <button type="button" class="get-now-button" data-phone-id="{{.ID}}" onclick="addToCart(this)">Add to
+                cart</button>
         </div>
         {{end}}
     </div>
@@ -32,7 +35,8 @@
     <div class="sale-banner">
         <h3>{{.SalePhone.Name}}</h3>
         <img src="{{.SalePhone.Image.URL}}" alt="Sale banner">
-        <button type="button" class="sale-button">Get now</button>
+        <button type="button" class="sale-button" data-phone-id="{{.SalePhone.ID}}" onclick="addToCart(this)">Get
+            now</button>
     </div>
 </section>
 
@@ -44,4 +48,31 @@
         <button type="submit">⇨</button>
     </form>
 </section>
+
+<script>
+    function addToCart(buttonElement) {
+        const phoneId = buttonElement.getAttribute('data-phone-id');
+        fetch('/api/users/me/cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({phoneId: phoneId}),
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to add item to cart');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(error);
+                console.log('Cart Response:', data);
+            })
+            .catch(error => {
+                alert(error);
+                console.error(error);
+            });
+    }
+</script>
 {{ end }}

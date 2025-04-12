@@ -131,18 +131,10 @@ func (c *Controller) HandleCreateCatalog(w http.ResponseWriter, r *http.Request)
 // @Router /api/catalogs [get]
 // @Security BearerAuth
 func (c *Controller) HandleGetCatalogs(w http.ResponseWriter, r *http.Request) {
-	userID, _ := r.Context().Value("user_id").(uint)
-	isAdmin, _ := r.Context().Value("is_admin").(bool)
-
 	var catalogs []Catalog
 	var err error
 
-	if isAdmin {
-		catalogs, err = c.service.FindAllCatalogs()
-	} else {
-		catalogs, err = c.service.FindCatalogsByUserID(userID)
-	}
-
+	catalogs, err = c.service.FindAllCatalogs()
 	if err != nil {
 		http.Error(w, "could not fetch catalogs", http.StatusInternalServerError)
 		return
@@ -171,17 +163,9 @@ func (c *Controller) HandleGetCatalogByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	userID, _ := r.Context().Value("user_id").(uint)
-	isAdmin, _ := r.Context().Value("is_admin").(bool)
-
 	catalog, err := c.service.GetCatalogByID(uint(id))
 	if err != nil {
 		http.Error(w, "catalog not found", http.StatusNotFound)
-		return
-	}
-
-	if catalog.CreatorID != userID && !isAdmin {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
