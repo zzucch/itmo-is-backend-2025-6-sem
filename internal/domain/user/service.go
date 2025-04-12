@@ -122,13 +122,22 @@ func (s *Service) GenerateJWT(user *User) (string, error) {
 		return "", err
 	}
 
+	updatedUser, err := s.repository.FindUserByID(user.ID)
+	if err != nil {
+		return "", err
+	}
+	*user = *updatedUser
+
 	return tokenString, nil
 }
 
 func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
 	token, err := s.repository.FindToken(tokenString)
-	if err != nil || time.Now().After(token.ExpiresAt) {
-		return nil, errors.New("invalid token")
+	if err != nil {
+		return nil, errors.New("token not found: " + err.Error())
+	}
+	if time.Now().After(token.ExpiresAt) {
+		return nil, errors.New("token expired")
 	}
 
 	claims := &Claims{}
@@ -141,7 +150,7 @@ func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
 	)
 
 	if err != nil || !jwtToken.Valid {
-		return nil, errors.New("invalid token")
+		return nil, errors.New("validation: invalid token")
 	}
 
 	return claims, nil
@@ -149,4 +158,27 @@ func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
 
 func (s *Service) InvalidateToken(tokenString string) error {
 	return s.repository.DeleteToken(tokenString)
+}
+
+func (s *Service) GetUserTokens(userID uint) ([]Token, error) {
+	user, err := s.repository.FindUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return user.Tokens, nil
+}
+
+func (s *Service) InvalidateAllUserTokens(userID uint) error {
+	user, err := s.repository.FindUserByID(userID)
+	if err != nil {
+		return err
+	}
+
+	for _, token := range user.Tokens {
+		if err := s.repository.DeleteToken(token.Token); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,10 +10,7 @@ import (
 	"github.com/swaggo/gin-swagger"
 )
 
-// @title Phone Marketplace API
-// @version 1.0
-// @BasePath /
-func Setup(controllers controllers) *http.ServeMux {
+func Setup(controllers controllers) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", controllers.indexController.Handle)
@@ -20,13 +18,33 @@ func Setup(controllers controllers) *http.ServeMux {
 	mux.HandleFunc("/sell", controllers.sellController.Handle)
 	mux.HandleFunc("/login", controllers.userController.HandleLoginPage)
 	mux.HandleFunc("/signup", controllers.userController.HandleSignupPage)
-	mux.HandleFunc("/order", controllers.cartController.HandleOrder)
 	mux.HandleFunc("/catalog", controllers.catalogController.Handle)
 	mux.HandleFunc("/notifications", controllers.notificationsHandler)
 
 	go func() {
 		gin.SetMode(gin.ReleaseMode)
 		r := gin.New()
+		r.Use(func(c *gin.Context) {
+			c.Writer.Header().Set(
+				"Access-Control-Allow-Origin",
+				"*",
+			)
+			c.Writer.Header().Set(
+				"Access-Control-Allow-Methods",
+				"GET, POST, PUT, DELETE, OPTIONS",
+			)
+			c.Writer.Header().Set(
+				"Access-Control-Allow-Headers",
+				"Content-Type, Authorization",
+			)
+
+			if c.Request.Method == http.MethodOptions {
+				c.AbortWithStatus(http.StatusNoContent)
+				return
+			}
+
+			c.Next()
+		})
 
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -39,10 +57,12 @@ func Setup(controllers controllers) *http.ServeMux {
 			controllers.userController.CreateUser(w, r)
 			return
 		}
+		log.Println("meowmeow")
 
 		controllers.userController.AuthMiddleware(
 			controllers.userController.AdminMiddleware(
 				func(w http.ResponseWriter, r *http.Request) {
+					log.Println("aoij")
 					switch r.Method {
 					case http.MethodGet:
 						controllers.userController.GetAllUsers(w, r)
@@ -55,10 +75,48 @@ func Setup(controllers controllers) *http.ServeMux {
 					}
 				},
 			),
-		)
+		)(w, r)
 	})
 	mux.HandleFunc("/api/users/login", controllers.userController.Login)
 	mux.HandleFunc("/api/users/logout", controllers.userController.Logout)
+	mux.HandleFunc("/api/users/me", controllers.userController.AuthMiddleware(
+		func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				controllers.userController.GetCurrentUser(w, r)
+			case http.MethodPut:
+				controllers.userController.UpdateCurrentUser(w, r)
+			case http.MethodDelete:
+				controllers.userController.DeleteCurrentUser(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		},
+	))
+	mux.HandleFunc("/api/users/me/tokens", controllers.userController.AuthMiddleware(
+		func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				controllers.userController.GetUserTokens(w, r)
+			case http.MethodPost:
+				controllers.sellController.HandleCreate(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		},
+	))
+	mux.HandleFunc("/api/users/{id}", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			controllers.userController.GetUserByID(w, r)
+		case http.MethodPut:
+			controllers.userController.UpdateUser(w, r)
+		case http.MethodDelete:
+			controllers.userController.DeleteUser(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 	mux.HandleFunc("/api/phones", controllers.userController.AuthMiddleware(
 		func(w http.ResponseWriter, r *http.Request) {
 			switch r.Method {
@@ -83,32 +141,16 @@ func Setup(controllers controllers) *http.ServeMux {
 			}
 		},
 	))
-	mux.HandleFunc("/api/users/me", controllers.userController.AuthMiddleware(
+	mux.HandleFunc("api/orders", controllers.userController.AuthMiddleware(
 		func(w http.ResponseWriter, r *http.Request) {
 			switch r.Method {
-			case http.MethodGet:
-				controllers.userController.GetCurrentUser(w, r)
-			case http.MethodPut:
-				controllers.userController.UpdateCurrentUser(w, r)
-			case http.MethodDelete:
-				controllers.userController.DeleteCurrentUser(w, r)
+			case http.MethodPost:
+				controllers.cartController.CreateOrder(w, r)
 			default:
 				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			}
 		},
 	))
-	mux.HandleFunc("/api/users/{id}", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			controllers.userController.GetUserByID(w, r)
-		case http.MethodPut:
-			controllers.userController.UpdateUser(w, r)
-		case http.MethodDelete:
-			controllers.userController.DeleteUser(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
 
 	mux.HandleFunc("/api/sse", controllers.notificationsSSEHandler)
 
@@ -117,5 +159,20 @@ func Setup(controllers controllers) *http.ServeMux {
 		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))),
 	)
 
-	return mux
+	return corsMiddleware(mux)
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

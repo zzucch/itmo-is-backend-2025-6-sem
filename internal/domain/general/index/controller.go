@@ -25,6 +25,13 @@ func NewController(
 	}
 }
 
+// @Summary Renders home page
+// @Description Renders home page
+// @Tags pages
+// @Router / [get]
+// @Produce html
+// @Success 200 "HTML home page"
+// @Failure 500 "Internal server error"
 func (c *Controller) Handle(
 	responseWriter http.ResponseWriter,
 	_ *http.Request,

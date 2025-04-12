@@ -24,6 +24,13 @@ func NewController(
 	}
 }
 
+// @Summary Renders catalog page
+// @Description Renders catalog page
+// @Tags pages
+// @Router /catalog [get]
+// @Produce html
+// @Success 200 "HTML catalog page"
+// @Failure 500 "Internal server error"
 func (c *Controller) Handle(
 	responseWriter http.ResponseWriter,
 	_ *http.Request,

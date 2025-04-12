@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,7 +25,9 @@ func NewController(service Service, loginTmpl, signupTmpl *template.Template) *C
 	}
 }
 
-// CreateUser creates a new user account
+// @Summary creates a new user account
+// @Description creates a new user account
+// @Tags users
 // @Router /api/users [post]
 // @Param request body user.CreateUserRequest true "User data"
 // @Success 201 {object} user.UserResponse
@@ -58,12 +62,17 @@ func (c *Controller) CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-// GetUserByID retrieves user by ID
-// @Router /api/users [get]
-// @Param id query int true "User ID"
+// @Summary retrieves user by ID
+// @Description retrieves user by ID
+// @Tags users
+// @Router /api/users/{id} [get]
+// @Param id path int true "User ID"
+// @Security BearerAuth
 // @Success 200 {object} user.UserResponse
+// @Failure 400 {object} map[string]string "Invalid user ID"
 func (c *Controller) GetUserByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+	path := strings.TrimPrefix(r.URL.Path, "/api/users/")
+	idStr := strings.Split(path, "/")[0]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
@@ -78,10 +87,13 @@ func (c *Controller) GetUserByID(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(user); err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		return
 	}
 }
 
-// UpdateUser updates user information
+// @Summary updates user information
+// @Description updates user information
+// @Tags users
 // @Router /api/users/{id} [put]
 // @Param id path int true "User ID"
 // @Security BearerAuth
@@ -92,6 +104,14 @@ func (c *Controller) GetUserByID(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} map[string]string "Forbidden"
 // @Failure 500 {object} map[string]string "Internal server error"
 func (c *Controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/users/")
+	idStr := strings.Split(path, "/")[0]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
 	var user User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -109,7 +129,7 @@ func (c *Controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		isAdmin = false
 	}
 
-	if userID != user.ID && !isAdmin {
+	if (userID != user.ID || userID != uint(id)) && !isAdmin {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -125,7 +145,9 @@ func (c *Controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetAllUsers retrieves all users (admin only)
+// @Summary retrieves all users
+// @Description retrieves all users
+// @Tags users
 // @Router /api/users [get]
 // @Security BearerAuth
 // @Success 200 {array} user.UserResponse
@@ -134,14 +156,17 @@ func (c *Controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 func (c *Controller) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	if _, ok := r.Context().Value("user_id").(uint); !ok {
+		log.Println("meow")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	if isAdmin, ok := r.Context().Value("is_admin").(bool); !isAdmin && !ok {
+		log.Println("meow")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+	log.Println(":3")
 
 	users, err := c.service.GetAllUsers()
 	if err != nil {
@@ -149,14 +174,19 @@ func (c *Controller) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	log.Println("qwe", users)
+
 	if err := json.NewEncoder(w).Encode(users); err != nil {
+		log.Println("asdaqwe")
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 	}
+	log.Println("qeq")
+	w.Header().Set("Content-Type", "application/json")
 }
 
-// DeleteUser removes a user account
+// @Summary removes a user account
+// @Description removes a user account
+// @Tags users
 // @Router /api/users/{id} [delete]
 // @Param id path int true "User ID"
 // @Security BearerAuth
@@ -166,7 +196,8 @@ func (c *Controller) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} map[string]string "User not found"
 // @Failure 500 {object} map[string]string "Internal server error"
 func (c *Controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+	path := strings.TrimPrefix(r.URL.Path, "/api/users/")
+	idStr := strings.Split(path, "/")[0]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
@@ -181,7 +212,9 @@ func (c *Controller) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Login authenticates user and returns token
+// @Summary authenticates user and returns token
+// @Description authenticates user and returns token
+// @Tags users
 // @Router /api/users/login [post]
 // @Param request body user.LoginRequest true "Credentials"
 // @Success 200 {object} user.LoginResponse
@@ -216,13 +249,60 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{
-		// TODO do i need it?
 		"user":  user,
 		"token": token,
 	})
 }
 
-// Logout ends user session
+// @Summary Get user tokens
+// @Description Get all active tokens for a user
+// @Tags users/me
+// @Security ApiKeyAuth
+// @Router /api/users/me/tokens [get]
+// @Success 200 {array} user.Token
+func (c *Controller) GetUserTokens(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	tokens, err := c.service.GetUserTokens(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tokens)
+}
+
+// @Summary Invalidate all user tokens
+// @Description Invalidates all active tokens for a user
+// @Tags users/me
+// @Security ApiKeyAuth
+// @Router /api/users/me/invalidate-tokens [post]
+// @Param id path uint true "User ID"
+// @Success 200 {string} string "All tokens invalidated successfully"
+func (c *Controller) InvalidateUserTokens(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if err := c.service.InvalidateAllUserTokens(userID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("All tokens invalidated successfully"))
+}
+
+// @Summary ends user session
+// @Description ends user session
+// @Tags users
 // @Router /api/users/logout [post]
 // @Security BearerAuth
 func (c *Controller) Logout(w http.ResponseWriter, r *http.Request) {
@@ -249,6 +329,7 @@ func (c *Controller) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("authin")
 		cookie, err := r.Cookie("token")
 		if err != nil {
 			authHeader := r.Header.Get("Authorization")
@@ -266,16 +347,23 @@ func (c *Controller) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		claims, err := c.service.ValidateToken(cookie.Value)
 		if err != nil {
-			http.Error(w, "invalid token", http.StatusUnauthorized)
+			http.Error(
+				w,
+				"auth middleware: validation failed: "+err.Error(),
+				http.StatusUnauthorized,
+			)
 			return
 		}
 
 		ctx := context.WithValue(r.Context(), "user_id", claims.UserID)
+		log.Println("daa")
 		next(w, r.WithContext(ctx))
 	}
 }
 
-// GetCurrentUser returns logged-in user's profile
+// @Summary returns logged-in user's profile
+// @Description returns logged-in user's profile
+// @Tags users/me
 // @Router /api/users/me [get]
 // @Security BearerAuth
 // @Success 200 {object} user.UserResponse
@@ -307,7 +395,9 @@ func (c *Controller) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// UpdateCurrentUser modifies user profile
+// @Summary modifies user profile
+// @Description modifies user profile
+// @Tags users/me
 // @Router /api/users/me [put]
 // @Security BearerAuth
 // @Param request body user.UpdateUserRequest false "Update data"
@@ -360,7 +450,9 @@ func (c *Controller) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 }
 
-// DeleteCurrentUser removes the currently authenticated user
+// @Summary removes the currently authenticated user
+// @Description removes the currently authenticated user
+// @Tags users/me
 // @Router /api/users/me [delete]
 // @Security BearerAuth
 // @Success 204 "No Content"
@@ -389,6 +481,15 @@ func (c *Controller) DeleteCurrentUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary Renders login page
+// @Description Renders login page
+// @Tags pages
+// @Router /login [get]
+// @Produce html
+// @Success 200 "HTML login page"
+// @Failure 302 "Redirect to home if already logged in"
+// @Failure 405 "Method not allowed"
+// @Failure 500 "Internal server error"
 func (c *Controller) HandleLoginPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -406,6 +507,15 @@ func (c *Controller) HandleLoginPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Renders signup page
+// @Description Renders signup page
+// @Tags pages
+// @Router /signup [get]
+// @Produce html
+// @Success 200 "HTML signup page"
+// @Failure 302 "Redirect to home if already logged in"
+// @Failure 405 "Method not allowed"
+// @Failure 500 "Internal server error"
 func (c *Controller) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -425,6 +535,7 @@ func (c *Controller) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) AdminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("adminin")
 		userID, ok := r.Context().Value("user_id").(uint)
 		if !ok {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -443,6 +554,7 @@ func (c *Controller) AdminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := context.WithValue(r.Context(), "is_admin", true)
+		log.Println("daada")
 		next(w, r.WithContext(ctx))
 	}
 }

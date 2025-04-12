@@ -10,4 +10,5 @@ type Repository interface {
 	CreateToken(token *Token) error
 	FindToken(tokenString string) (*Token, error)
 	DeleteToken(tokenString string) error
+	DeleteExpiredTokens() error
 }

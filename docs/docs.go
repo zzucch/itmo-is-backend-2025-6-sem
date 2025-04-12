@@ -15,6 +15,26 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/": {
+            "get": {
+                "description": "Renders home page",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "pages"
+                ],
+                "summary": "Renders home page",
+                "responses": {
+                    "200": {
+                        "description": "HTML home page"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
         "/api/phones": {
             "get": {
                 "security": [
@@ -22,6 +42,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "lists user's phones",
+                "tags": [
+                    "phones"
+                ],
+                "summary": "lists user's phones",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -40,6 +65,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "adds a new phone listing",
+                "tags": [
+                    "phones"
+                ],
+                "summary": "adds a new phone listing",
                 "parameters": [
                     {
                         "description": "Phone details",
@@ -65,6 +95,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "modifies phone listing",
+                "tags": [
+                    "phones"
+                ],
+                "summary": "modifies phone listing",
                 "parameters": [
                     {
                         "type": "integer",
@@ -98,6 +133,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "removes a phone listing",
+                "tags": [
+                    "phones"
+                ],
+                "summary": "removes a phone listing",
                 "parameters": [
                     {
                         "type": "integer",
@@ -121,6 +161,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "retrieves all users",
+                "tags": [
+                    "users"
+                ],
+                "summary": "retrieves all users",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -161,6 +206,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "description": "creates a new user account",
+                "tags": [
+                    "users"
+                ],
+                "summary": "creates a new user account",
                 "parameters": [
                     {
                         "description": "User data",
@@ -184,6 +234,11 @@ const docTemplate = `{
         },
         "/api/users/login": {
             "post": {
+                "description": "authenticates user and returns token",
+                "tags": [
+                    "users"
+                ],
+                "summary": "authenticates user and returns token",
                 "parameters": [
                     {
                         "description": "Credentials",
@@ -212,6 +267,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "ends user session",
+                "tags": [
+                    "users"
+                ],
+                "summary": "ends user session",
                 "responses": {}
             }
         },
@@ -222,6 +282,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "returns logged-in user's profile",
+                "tags": [
+                    "users/me"
+                ],
+                "summary": "returns logged-in user's profile",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -237,6 +302,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "modifies user profile",
+                "tags": [
+                    "users/me"
+                ],
+                "summary": "modifies user profile",
                 "parameters": [
                     {
                         "description": "Update data",
@@ -262,6 +332,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "removes the currently authenticated user",
+                "tags": [
+                    "users/me"
+                ],
+                "summary": "removes the currently authenticated user",
                 "responses": {
                     "204": {
                         "description": "No Content"
@@ -287,13 +362,112 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/users/me/invalidate-tokens": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Invalidates all active tokens for a user",
+                "tags": [
+                    "users/me"
+                ],
+                "summary": "Invalidate all user tokens",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "All tokens invalidated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/me/tokens": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all active tokens for a user",
+                "tags": [
+                    "users/me"
+                ],
+                "summary": "Get user tokens",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_domain_user.Token"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "retrieves user by ID",
+                "tags": [
+                    "users"
+                ],
+                "summary": "retrieves user by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_domain_user.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
+                "description": "updates user information",
+                "tags": [
+                    "users"
+                ],
+                "summary": "updates user information",
                 "parameters": [
                     {
                         "type": "integer",
@@ -363,6 +537,11 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "removes a user account",
+                "tags": [
+                    "users"
+                ],
+                "summary": "removes a user account",
                 "parameters": [
                     {
                         "type": "integer",
@@ -411,6 +590,156 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/cart": {
+            "get": {
+                "description": "Renders cart page",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "pages"
+                ],
+                "summary": "Renders cart page",
+                "responses": {
+                    "200": {
+                        "description": "HTML cart page"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/catalog": {
+            "get": {
+                "description": "Renders catalog page",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "pages"
+                ],
+                "summary": "Renders catalog page",
+                "responses": {
+                    "200": {
+                        "description": "HTML catalog page"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/login": {
+            "get": {
+                "description": "Renders login page",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "pages"
+                ],
+                "summary": "Renders login page",
+                "responses": {
+                    "200": {
+                        "description": "HTML login page"
+                    },
+                    "302": {
+                        "description": "Redirect to home if already logged in"
+                    },
+                    "405": {
+                        "description": "Method not allowed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/orders": {
+            "post": {
+                "description": "Places a new order",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "tags": [
+                    "orders"
+                ],
+                "summary": "Places a new order",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Array of phone IDs",
+                        "name": "phone_ids",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "order ID: {id}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID or phone ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "405": {
+                        "description": "Method not allowed",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/signup": {
+            "get": {
+                "description": "Renders signup page",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "pages"
+                ],
+                "summary": "Renders signup page",
+                "responses": {
+                    "200": {
+                        "description": "HTML signup page"
+                    },
+                    "302": {
+                        "description": "Redirect to home if already logged in"
+                    },
+                    "405": {
+                        "description": "Method not allowed"
+                    },
+                    "500": {
+                        "description": "Internal server error"
                     }
                 }
             }
@@ -571,6 +900,9 @@ const docTemplate = `{
                 "updatedAt": {
                     "type": "string"
                 },
+                "user": {
+                    "$ref": "#/definitions/internal_domain_user.User"
+                },
                 "userID": {
                     "type": "integer"
                 }
@@ -664,16 +996,24 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "\"Bearer\" followed by a space and the JWT token",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
-	Schemes:          []string{},
-	Title:            "",
+	Version:          "1.0",
+	Host:             "localhost:3000",
+	BasePath:         "/",
+	Schemes:          []string{"http"},
+	Title:            "Phone Marketplace API",
 	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

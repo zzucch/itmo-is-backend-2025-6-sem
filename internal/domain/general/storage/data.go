@@ -29,10 +29,20 @@ func (s *Storage) AddData() {
 			return hash
 		}(),
 		LastLogin: time.Now(),
-		Cart:      []general.Phone{},
-		Tokens:    []user.Token{},
 	}
 	s.DB.Create(&userQwe)
+
+	userAdmin := user.User{
+		Username: "ewq",
+		Email:    "e@wq",
+		PasswordHash: func() string {
+			hash, _ := user.HashPassword("qwe")
+			return hash
+		}(),
+		LastLogin: time.Now(),
+		Role:      user.RoleAdmin,
+	}
+	s.DB.Create(&userAdmin)
 
 	newPhones := []general.Phone{
 		{

@@ -6,7 +6,6 @@ import (
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/cart"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
-	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/notification"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/user"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -15,6 +14,10 @@ import (
 
 type Storage struct {
 	DB *gorm.DB
+}
+
+func (s *Storage) DeleteExpiredTokens() error {
+	panic("TODO")
 }
 
 func (s *Storage) GetAllUsers() ([]*user.User, error) {
@@ -72,10 +75,10 @@ func (s *Storage) FindUserByID(id uint) (*user.User, error) {
 		return nil, errors.New("invalid ID")
 	}
 	var user user.User
-	err := s.DB.First(&user, id).Error
+	err := s.DB.Preload("Tokens").First(&user, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, errors.New("user not found")
 		}
 		return nil, err
 	}
@@ -87,7 +90,7 @@ func (s *Storage) FindUserByUsername(username string) (*user.User, error) {
 		return nil, errors.New("username cannot be empty")
 	}
 	var user user.User
-	err := s.DB.Where("username = ?", username).First(&user).Error
+	err := s.DB.Preload("Tokens").Where("username = ?", username).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -122,7 +125,14 @@ func (s *Storage) CreateToken(token *user.Token) error {
 	if token == nil {
 		return errors.New("token cannot be nil")
 	}
-	return s.DB.Create(token).Error
+
+	if err := s.DB.Create(token).Error; err != nil {
+		return err
+	}
+
+	return s.DB.Model(&user.User{Model: gorm.Model{ID: token.UserID}}).
+		Association("Tokens").
+		Append(token)
 }
 
 func (s *Storage) FindToken(tokenString string) (*user.Token, error) {
@@ -249,7 +259,6 @@ func New(dsn string) (*Storage, error) {
 		&general.Image{},
 		&cart.Order{},
 		&catalog.Catalog{},
-		&notification.Notification{},
 	); err != nil {
 		return nil, err
 	}
@@ -261,7 +270,6 @@ func New(dsn string) (*Storage, error) {
 		&general.Phone{},
 		&general.Image{},
 		&catalog.Catalog{},
-		&notification.Notification{},
 	); err != nil {
 		return nil, err
 	}

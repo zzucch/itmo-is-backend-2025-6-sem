@@ -9,6 +9,15 @@ import (
 	"github.com/is-web-y26/m3302-milovatskiy/internal/server"
 )
 
+// @title Phone Marketplace API
+// @version 1.0
+// @BasePath /
+// @host localhost:3000
+// @schemes http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description "Bearer" followed by a space and the JWT token
 func main() {
 	logger := initLogger()
 

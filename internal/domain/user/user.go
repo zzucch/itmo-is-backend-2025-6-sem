@@ -15,7 +15,7 @@ type User struct {
 	PasswordHash string
 	LastLogin    time.Time
 	Cart         []general.Phone `gorm:"many2many:user_cart;"`
-	Tokens       []Token         `gorm:"foreignKey:UserID"`
+	Tokens       []Token         `gorm:"foreignKey:UserID;references:ID"`
 	Role
 }
 

@@ -44,7 +44,9 @@ func (c *Controller) Handle(
 	}
 }
 
-// HandleCreate adds a new phone listing
+// @Summary adds a new phone listing
+// @Description adds a new phone listing
+// @Tags phones
 // @Router /api/phones [post]
 // @Security BearerAuth
 // @Param request body general.Phone true "Phone details"
@@ -94,7 +96,9 @@ func (c *Controller) HandleCreate(
 	responseWriter.WriteHeader(http.StatusCreated)
 }
 
-// HandleGetAll lists user's phones
+// @Summary lists user's phones
+// @Description lists user's phones
+// @Tags phones
 // @Router /api/phones [get]
 // @Security BearerAuth
 // @Success 200 {array} general.Phone
@@ -130,7 +134,9 @@ func (c *Controller) HandleGetAll(
 	json.NewEncoder(responseWriter).Encode(userPhones)
 }
 
-// HandleDelete removes a phone listing
+// @Summary removes a phone listing
+// @Description removes a phone listing
+// @Tags phones
 // @Router /api/phones/{id} [delete]
 // @Security BearerAuth
 // @Param id path int true "Phone ID"
@@ -189,7 +195,9 @@ func (c *Controller) HandleDelete(
 	responseWriter.WriteHeader(http.StatusNoContent)
 }
 
-// HandleUpdate modifies phone listing
+// @Summary modifies phone listing
+// @Description modifies phone listing
+// @Tags phones
 // @Router /api/phones/{id} [put]
 // @Security BearerAuth
 // @Param id path int true "Phone ID"

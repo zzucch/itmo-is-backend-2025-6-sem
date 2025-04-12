@@ -34,3 +34,7 @@ func (s *Service) PlaceOrder(userID uint, phoneIDs []uint) (*Order, error) {
 
 	return order, nil
 }
+
+func (s *Service) GetAllOrders() (any, error) {
+	panic("TODO")
+}

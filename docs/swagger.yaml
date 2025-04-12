@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone:
     properties:
@@ -103,6 +104,8 @@ definitions:
         type: string
       updatedAt:
         type: string
+      user:
+        $ref: '#/definitions/internal_domain_user.User'
       userID:
         type: integer
     type: object
@@ -164,11 +167,28 @@ definitions:
       username:
         type: string
     type: object
+host: localhost:3000
 info:
   contact: {}
+  title: Phone Marketplace API
+  version: "1.0"
 paths:
+  /:
+    get:
+      description: Renders home page
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML home page
+        "500":
+          description: Internal server error
+      summary: Renders home page
+      tags:
+      - pages
   /api/phones:
     get:
+      description: lists user's phones
       responses:
         "200":
           description: OK
@@ -178,7 +198,11 @@ paths:
             type: array
       security:
       - BearerAuth: []
+      summary: lists user's phones
+      tags:
+      - phones
     post:
+      description: adds a new phone listing
       parameters:
       - description: Phone details
         in: body
@@ -191,8 +215,12 @@ paths:
           description: Created
       security:
       - BearerAuth: []
+      summary: adds a new phone listing
+      tags:
+      - phones
   /api/phones/{id}:
     delete:
+      description: removes a phone listing
       parameters:
       - description: Phone ID
         in: path
@@ -204,7 +232,11 @@ paths:
           description: No Content
       security:
       - BearerAuth: []
+      summary: removes a phone listing
+      tags:
+      - phones
     put:
+      description: modifies phone listing
       parameters:
       - description: Phone ID
         in: path
@@ -224,8 +256,12 @@ paths:
             $ref: '#/definitions/github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone'
       security:
       - BearerAuth: []
+      summary: modifies phone listing
+      tags:
+      - phones
   /api/users:
     get:
+      description: retrieves all users
       responses:
         "200":
           description: OK
@@ -253,7 +289,11 @@ paths:
             type: object
       security:
       - BearerAuth: []
+      summary: retrieves all users
+      tags:
+      - users
     post:
+      description: creates a new user account
       parameters:
       - description: User data
         in: body
@@ -266,8 +306,12 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/internal_domain_user.UserResponse'
+      summary: creates a new user account
+      tags:
+      - users
   /api/users/{id}:
     delete:
+      description: removes a user account
       parameters:
       - description: User ID
         in: path
@@ -303,7 +347,35 @@ paths:
             type: object
       security:
       - BearerAuth: []
+      summary: removes a user account
+      tags:
+      - users
+    get:
+      description: retrieves user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_domain_user.UserResponse'
+        "400":
+          description: Invalid user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: retrieves user by ID
+      tags:
+      - users
     put:
+      description: updates user information
       parameters:
       - description: User ID
         in: path
@@ -347,8 +419,12 @@ paths:
             type: object
       security:
       - BearerAuth: []
+      summary: updates user information
+      tags:
+      - users
   /api/users/login:
     post:
+      description: authenticates user and returns token
       parameters:
       - description: Credentials
         in: body
@@ -361,13 +437,21 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/internal_domain_user.LoginResponse'
+      summary: authenticates user and returns token
+      tags:
+      - users
   /api/users/logout:
     post:
+      description: ends user session
       responses: {}
       security:
       - BearerAuth: []
+      summary: ends user session
+      tags:
+      - users
   /api/users/me:
     delete:
+      description: removes the currently authenticated user
       responses:
         "204":
           description: No Content
@@ -385,7 +469,11 @@ paths:
             type: object
       security:
       - BearerAuth: []
+      summary: removes the currently authenticated user
+      tags:
+      - users/me
     get:
+      description: returns logged-in user's profile
       responses:
         "200":
           description: OK
@@ -393,7 +481,11 @@ paths:
             $ref: '#/definitions/internal_domain_user.UserResponse'
       security:
       - BearerAuth: []
+      summary: returns logged-in user's profile
+      tags:
+      - users/me
     put:
+      description: modifies user profile
       parameters:
       - description: Update data
         in: body
@@ -407,4 +499,148 @@ paths:
             $ref: '#/definitions/internal_domain_user.UpdateResponse'
       security:
       - BearerAuth: []
+      summary: modifies user profile
+      tags:
+      - users/me
+  /api/users/me/invalidate-tokens:
+    post:
+      description: Invalidates all active tokens for a user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: All tokens invalidated successfully
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Invalidate all user tokens
+      tags:
+      - users/me
+  /api/users/me/tokens:
+    get:
+      description: Get all active tokens for a user
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_domain_user.Token'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: Get user tokens
+      tags:
+      - users/me
+  /cart:
+    get:
+      description: Renders cart page
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML cart page
+        "500":
+          description: Internal server error
+      summary: Renders cart page
+      tags:
+      - pages
+  /catalog:
+    get:
+      description: Renders catalog page
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML catalog page
+        "500":
+          description: Internal server error
+      summary: Renders catalog page
+      tags:
+      - pages
+  /login:
+    get:
+      description: Renders login page
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML login page
+        "302":
+          description: Redirect to home if already logged in
+        "405":
+          description: Method not allowed
+        "500":
+          description: Internal server error
+      summary: Renders login page
+      tags:
+      - pages
+  /orders:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Places a new order
+      parameters:
+      - description: User ID
+        in: formData
+        name: user_id
+        required: true
+        type: integer
+      - collectionFormat: csv
+        description: Array of phone IDs
+        in: formData
+        items:
+          type: integer
+        name: phone_ids
+        required: true
+        type: array
+      responses:
+        "200":
+          description: 'order ID: {id}'
+          schema:
+            type: string
+        "400":
+          description: Invalid user ID or phone ID
+          schema:
+            type: string
+        "405":
+          description: Method not allowed
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Places a new order
+      tags:
+      - orders
+  /signup:
+    get:
+      description: Renders signup page
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML signup page
+        "302":
+          description: Redirect to home if already logged in
+        "405":
+          description: Method not allowed
+        "500":
+          description: Internal server error
+      summary: Renders signup page
+      tags:
+      - pages
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: '"Bearer" followed by a space and the JWT token'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

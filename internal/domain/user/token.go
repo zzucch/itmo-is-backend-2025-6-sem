@@ -15,6 +15,7 @@ const (
 type Token struct {
 	gorm.Model
 	UserID    uint
+	User      User   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Token     string `gorm:"unique"`
 	ExpiresAt time.Time
 }
