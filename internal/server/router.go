@@ -158,6 +158,8 @@ func Setup(controllers controllers) http.Handler {
 		controllers.userController.AdminMiddleware(
 			func(w http.ResponseWriter, r *http.Request) {
 				switch r.Method {
+				case http.MethodGet:
+					controllers.cartController.GetAllOrders(w, r)
 				case http.MethodPost:
 					controllers.cartController.CreateOrder(w, r)
 				default:
@@ -165,6 +167,31 @@ func Setup(controllers controllers) http.Handler {
 				}
 			},
 		),
+	))
+	mux.HandleFunc("/api/orders/{id}", controllers.userController.AuthMiddleware(
+		controllers.userController.AdminMiddleware(
+			func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodDelete:
+					controllers.cartController.DeleteOrder(w, r)
+				case http.MethodPut:
+					controllers.cartController.UpdateOrder(w, r)
+				case http.MethodGet:
+					controllers.cartController.GetOrderByID(w, r)
+				default:
+					http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				}
+			},
+		),
+	))
+	mux.HandleFunc("/api/orders/me", controllers.userController.AuthMiddleware(
+		func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodGet {
+				controllers.cartController.GetMyOrders(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		},
 	))
 
 	mux.HandleFunc("/api/sse", controllers.notificationsSSEHandler)

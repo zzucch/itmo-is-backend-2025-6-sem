@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 
 	pageData "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/page_data"
 )
@@ -53,7 +54,7 @@ func (c *Controller) Handle(
 // @Summary Places a new order
 // @Description Places a new order
 // @Tags orders
-// @Router /orders [post]
+// @Router /api/orders [post]
 // @Accept multipart/form-data
 // @Param user_id formData int true "User ID"
 // @Param phone_ids formData []int true "Array of phone IDs" collectionFormat: multi
@@ -98,6 +99,15 @@ func (c *Controller) CreateOrder(responseWriter http.ResponseWriter, request *ht
 	)
 }
 
+// @Summary Retrieves all orders
+// @Description Retrieves all orders (admin only)
+// @Tags orders
+// @Router /api/orders [get]
+// @Security BearerAuth
+// @Success 200 {array} Order
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 403 {string} string "Forbidden"
+// @Failure 500 {string} string "Internal server error"
 func (c *Controller) GetAllOrders(w http.ResponseWriter, r *http.Request) {
 	if _, ok := r.Context().Value("user_id").(uint); !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -116,8 +126,162 @@ func (c *Controller) GetAllOrders(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(users); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// @Summary Retrieves an order by ID
+// @Description Retrieves an order by ID (admin or order owner only)
+// @Tags orders
+// @Router /api/orders/{id} [get]
+// @Param id path int true "Order ID"
+// @Security BearerAuth
+// @Success 200 {object} Order
+// @Failure 400 {string} string "Invalid order ID"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 403 {string} string "Forbidden"
+// @Failure 404 {string} string "Order not found"
+// @Failure 500 {string} string "Internal server error"
+func (c *Controller) GetOrderByID(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/orders/")
+	idStr := strings.Split(path, "/")[0]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	isAdmin, _ := r.Context().Value("is_admin").(bool)
+
+	order, err := c.service.GetOrderByID(uint(id))
+	if err != nil {
+		http.Error(w, "Order not found", http.StatusNotFound)
+		return
+	}
+
+	if !isAdmin && order.UserID != userID {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(order); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// @Summary Updates an order
+// @Description Updates an order (admin only)
+// @Tags orders
+// @Router /api/orders/{id} [put]
+// @Param id path int true "Order ID"
+// @Security BearerAuth
+// @Param request body Order true "Order data"
+// @Success 200 {object} Order
+// @Failure 400 {string} string "Invalid request"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 403 {string} string "Forbidden"
+// @Failure 500 {string} string "Internal server error"
+func (c *Controller) UpdateOrder(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/orders/")
+	idStr := strings.Split(path, "/")[0]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		return
+	}
+
+	if isAdmin, ok := r.Context().Value("is_admin").(bool); !isAdmin || !ok {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	var order Order
+	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if uint(id) != order.ID {
+		http.Error(w, "ID in path and body don't match", http.StatusBadRequest)
+		return
+	}
+
+	updatedOrder, err := c.service.UpdateOrder(&order)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(updatedOrder); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// @Summary Deletes an order
+// @Description Deletes an order (admin only)
+// @Tags orders
+// @Router /api/orders/{id} [delete]
+// @Param id path int true "Order ID"
+// @Security BearerAuth
+// @Success 204 "No Content"
+// @Failure 400 {string} string "Invalid order ID"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 403 {string} string "Forbidden"
+// @Failure 500 {string} string "Internal server error"
+func (c *Controller) DeleteOrder(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/orders/")
+	idStr := strings.Split(path, "/")[0]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		return
+	}
+
+	if isAdmin, ok := r.Context().Value("is_admin").(bool); !isAdmin || !ok {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	if err := c.service.DeleteOrder(uint(id)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// @Summary Retrieves current user's orders
+// @Description Retrieves orders for the authenticated user
+// @Tags orders/me
+// @Router /api/orders/me [get]
+// @Security BearerAuth
+// @Success 200 {array} Order
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 500 {string} string "Internal server error"
+func (c *Controller) GetMyOrders(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	orders, err := c.service.GetOrdersByUserID(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(orders); err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 	}
 }

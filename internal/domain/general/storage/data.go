@@ -157,20 +157,23 @@ func (s *Storage) AddData() {
 	}
 
 	saleCatalog := catalog.Catalog{
-		Name:   "Sale Phone",
-		Phones: []general.Phone{salePhone},
+		Name:      "Sale Phone",
+		Phones:    []general.Phone{salePhone},
+		CreatorID: 2,
 	}
 	s.DB.Create(&saleCatalog)
 
 	newPhonesCatalog := catalog.Catalog{
-		Name:   "New Phones",
-		Phones: newPhones,
+		Name:      "New Phones",
+		Phones:    newPhones,
+		CreatorID: 2,
 	}
 	s.DB.Create(&newPhonesCatalog)
 
 	featuredPhonesCatalog := catalog.Catalog{
-		Name:   "Featured Phones",
-		Phones: featuredPhones,
+		Name:      "Featured Phones",
+		Phones:    featuredPhones,
+		CreatorID: 2,
 	}
 	s.DB.Create(&featuredPhonesCatalog)
 }

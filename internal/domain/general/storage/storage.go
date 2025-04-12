@@ -16,8 +16,24 @@ type Storage struct {
 	DB *gorm.DB
 }
 
+func (s *Storage) FindCatalogsByUserID(userID uint) ([]catalog.Catalog, error) {
+	if userID == 0 {
+		return nil, errors.New("invalid user ID")
+	}
+	var catalogs []catalog.Catalog
+	err := s.DB.Preload("Phones").Where("user_id = ?", userID).Find(&catalogs).Error
+	if err != nil {
+		return nil, err
+	}
+	return catalogs, nil
+}
+
 func (s *Storage) DeleteExpiredTokens() error {
-	panic("TODO")
+	result := s.DB.Where("expires_at < ?", gorm.Expr("NOW()")).Delete(&user.Token{})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 func (s *Storage) GetAllUsers() ([]*user.User, error) {

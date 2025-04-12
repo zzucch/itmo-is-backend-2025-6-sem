@@ -138,7 +138,6 @@ func (c *Controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(user); err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 	}
@@ -288,7 +287,6 @@ func (c *Controller) InvalidateUserTokens(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("All tokens invalidated successfully"))
 }
 
@@ -436,7 +434,6 @@ func (c *Controller) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 }
 

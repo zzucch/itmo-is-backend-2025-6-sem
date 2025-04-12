@@ -1,6 +1,8 @@
 package catalog
 
 import (
+	"errors"
+
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 )
 
@@ -49,4 +51,42 @@ func (s *Service) GetNewPhones() ([]general.Phone, error) {
 	}
 
 	return catalog.Phones, nil
+}
+
+func (s *Service) FindAllCatalogs() ([]Catalog, error) {
+	return s.repository.FindAllCatalogs()
+}
+
+func (s *Service) FindCatalogsByUserID(userID uint) ([]Catalog, error) {
+	return s.repository.FindCatalogsByUserID(userID)
+}
+
+func (s *Service) GetCatalogByID(param any) (Catalog, error) {
+	id, ok := param.(uint)
+	if !ok {
+		return Catalog{}, errors.New("invalid ID type")
+	}
+
+	catalog, err := s.repository.FindCatalogByID(id)
+	if err != nil {
+		return Catalog{}, err
+	}
+
+	return *catalog, nil
+}
+
+func (s *Service) CreateCatalog(catalog *Catalog) error {
+	return s.repository.CreateCatalog(catalog)
+}
+
+func (s *Service) UpdateCatalog(catalog *Catalog) error {
+	return s.repository.UpdateCatalog(catalog)
+}
+
+func (s *Service) DeleteCatalog(param any) error {
+	id, ok := param.(uint)
+	if !ok {
+		return errors.New("invalid ID type")
+	}
+	return s.repository.DeleteCatalog(id)
 }

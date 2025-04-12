@@ -7,6 +7,7 @@ import (
 
 type Catalog struct {
 	gorm.Model
-	Name   string
-	Phones []general.Phone `gorm:"many2many:catalog_phones;"`
+	Name      string
+	Phones    []general.Phone `gorm:"many2many:catalog_phones;"`
+	CreatorID uint
 }
