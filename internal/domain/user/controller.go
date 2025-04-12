@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"html/template"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -156,17 +155,14 @@ func (c *Controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} map[string]string "Internal server error"
 func (c *Controller) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	if _, ok := r.Context().Value("user_id").(uint); !ok {
-		log.Println("meow")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	if isAdmin, ok := r.Context().Value("is_admin").(bool); !isAdmin && !ok {
-		log.Println("meow")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	log.Println(":3")
 
 	users, err := c.service.GetAllUsers()
 	if err != nil {
@@ -174,13 +170,9 @@ func (c *Controller) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("qwe", users)
-
 	if err := json.NewEncoder(w).Encode(users); err != nil {
-		log.Println("asdaqwe")
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 	}
-	log.Println("qeq")
 	w.Header().Set("Content-Type", "application/json")
 }
 
@@ -329,7 +321,6 @@ func (c *Controller) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("authin")
 		cookie, err := r.Cookie("token")
 		if err != nil {
 			authHeader := r.Header.Get("Authorization")
@@ -356,7 +347,6 @@ func (c *Controller) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := context.WithValue(r.Context(), "user_id", claims.UserID)
-		log.Println("daa")
 		next(w, r.WithContext(ctx))
 	}
 }
@@ -535,7 +525,6 @@ func (c *Controller) HandleSignupPage(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) AdminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("adminin")
 		userID, ok := r.Context().Value("user_id").(uint)
 		if !ok {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -554,7 +543,6 @@ func (c *Controller) AdminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := context.WithValue(r.Context(), "is_admin", true)
-		log.Println("daada")
 		next(w, r.WithContext(ctx))
 	}
 }

@@ -51,7 +51,7 @@ func (c *Controller) Handle(
 // @Security BearerAuth
 // @Param request body general.Phone true "Phone details"
 // @Success 201
-func (c *Controller) HandleCreate(
+func (c *Controller) HandleCreatePhone(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -68,7 +68,7 @@ func (c *Controller) HandleCreate(
 	if err := json.NewDecoder(request.Body).Decode(&phone); err != nil {
 		http.Error(
 			responseWriter,
-			"invalid request body",
+			"invalid request body: "+err.Error(),
 			http.StatusBadRequest,
 		)
 
@@ -123,9 +123,16 @@ func (c *Controller) HandleGetAll(
 		return
 	}
 
+	isAdmin, ok := r.Context().Value("is_admin").(bool)
+	if !ok {
+		isAdmin = false
+	}
+
 	userPhones := make([]general.Phone, 0, len(phones))
 	for _, phone := range phones {
 		if phone.SellerID == userID {
+			userPhones = append(userPhones, phone)
+		} else if isAdmin {
 			userPhones = append(userPhones, phone)
 		}
 	}
@@ -141,7 +148,7 @@ func (c *Controller) HandleGetAll(
 // @Security BearerAuth
 // @Param id path int true "Phone ID"
 // @Success 204
-func (c *Controller) HandleDelete(
+func (c *Controller) HandleDeletePhone(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -155,12 +162,12 @@ func (c *Controller) HandleDelete(
 		return
 	}
 
-	phoneIDStr := request.URL.Path[len("/delete/"):]
+	phoneIDStr := request.URL.Path[len("/api/phones/"):]
 	phoneID, err := strconv.Atoi(phoneIDStr)
 	if err != nil {
 		http.Error(
 			responseWriter,
-			"invalid phone ID",
+			"invalid phone ID: "+err.Error(),
 			http.StatusBadRequest,
 		)
 		return
@@ -172,13 +179,18 @@ func (c *Controller) HandleDelete(
 		return
 	}
 
+	isAdmin, ok := request.Context().Value("is_admin").(bool)
+	if !ok {
+		isAdmin = false
+	}
+
 	phone, err := c.service.repository.FindPhoneByID(uint(phoneID))
 	if err != nil {
 		http.Error(responseWriter, "phone does not exist", http.StatusBadRequest)
 		return
 	}
 
-	if phone.SellerID != userID {
+	if phone.SellerID != userID && !isAdmin {
 		http.Error(responseWriter, "unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -195,6 +207,64 @@ func (c *Controller) HandleDelete(
 	responseWriter.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary gets phone listing by id
+// @Description gets phone listing by id
+// @Tags phones
+// @Router /api/phones/{id} [get]
+// @Security BearerAuth
+// @Param id path int true "Phone ID"
+// @Param request body general.Phone true "Phone details"
+// @Success 200 {object} general.Phone
+func (c *Controller) HandleGetPhoneByID(
+	responseWriter http.ResponseWriter,
+	request *http.Request,
+) {
+	if request.Method != http.MethodGet {
+		http.Error(
+			responseWriter,
+			"invalid request method",
+			http.StatusMethodNotAllowed,
+		)
+		return
+	}
+
+	phoneIDStr := request.URL.Path[len("/api/phones/"):]
+	phoneID, err := strconv.Atoi(phoneIDStr)
+	if err != nil {
+		http.Error(
+			responseWriter,
+			"invalid phone ID",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	userID, ok := request.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(responseWriter, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	isAdmin, ok := request.Context().Value("is_admin").(bool)
+	if !ok {
+		isAdmin = false
+	}
+
+	phone, err := c.service.GetPhoneByID(uint(phoneID))
+	if err != nil {
+		http.Error(responseWriter, "phone not found", http.StatusNotFound)
+		return
+	}
+
+	if phone.SellerID != userID && !isAdmin {
+		http.Error(responseWriter, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	responseWriter.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(responseWriter).Encode(phone)
+}
+
 // @Summary modifies phone listing
 // @Description modifies phone listing
 // @Tags phones
@@ -203,7 +273,7 @@ func (c *Controller) HandleDelete(
 // @Param id path int true "Phone ID"
 // @Param request body general.Phone true "Updated phone details"
 // @Success 200 {object} general.Phone
-func (c *Controller) HandleUpdate(
+func (c *Controller) HandleUpdatePhone(
 	responseWriter http.ResponseWriter,
 	request *http.Request,
 ) {
@@ -233,6 +303,11 @@ func (c *Controller) HandleUpdate(
 		return
 	}
 
+	isAdmin, ok := request.Context().Value("is_admin").(bool)
+	if !ok {
+		isAdmin = false
+	}
+
 	var phone general.Phone
 	if err := json.NewDecoder(request.Body).Decode(&phone); err != nil {
 		http.Error(
@@ -249,7 +324,7 @@ func (c *Controller) HandleUpdate(
 		return
 	}
 
-	if existingPhone.SellerID != userID {
+	if existingPhone.SellerID != userID && !isAdmin {
 		http.Error(responseWriter, "unauthorized", http.StatusUnauthorized)
 		return
 	}

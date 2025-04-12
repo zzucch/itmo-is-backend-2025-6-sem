@@ -235,6 +235,30 @@ paths:
       summary: removes a phone listing
       tags:
       - phones
+    get:
+      description: gets phone listing by id
+      parameters:
+      - description: Phone ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Phone details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone'
+      security:
+      - BearerAuth: []
+      summary: gets phone listing by id
+      tags:
+      - phones
     put:
       description: modifies phone listing
       parameters:

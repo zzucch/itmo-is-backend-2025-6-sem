@@ -89,6 +89,44 @@ const docTemplate = `{
             }
         },
         "/api/phones/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "gets phone listing by id",
+                "tags": [
+                    "phones"
+                ],
+                "summary": "gets phone listing by id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Phone ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Phone details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_is-web-y26_m3302-milovatskiy_internal_domain_general.Phone"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
