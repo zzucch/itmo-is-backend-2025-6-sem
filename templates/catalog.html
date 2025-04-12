@@ -57,16 +57,17 @@
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({phoneId: phoneId}),
+            body: JSON.stringify({phone_id: Number(phoneId)}),
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Failed to add item to cart');
+                    return response.text().then(text => {
+                        throw new Error(text || 'Failed to add item to cart');
+                    });
                 }
                 return response.json();
             })
             .then(data => {
-                alert(error);
                 console.log('Cart Response:', data);
             })
             .catch(error => {

@@ -564,6 +564,7 @@ func (c *Controller) AddToCart(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		PhoneID uint `json:"phone_id"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return

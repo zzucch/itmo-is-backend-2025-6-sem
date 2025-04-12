@@ -344,3 +344,21 @@ func New(dsn string) (*Storage, error) {
 		DB: db,
 	}, nil
 }
+
+func (s *Storage) GetUserCart(userID uint) ([]general.Phone, error) {
+	var user user.User
+	if err := s.DB.First(&user, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+
+	var phones []general.Phone
+	err := s.DB.Model(&user).Association("Cart").Find(&phones)
+	if err != nil {
+		return nil, err
+	}
+
+	return phones, nil
+}

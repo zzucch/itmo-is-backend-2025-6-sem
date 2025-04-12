@@ -35,12 +35,7 @@ func (s *Service) RemoveFromCart(userID uint, phoneID uint) error {
 }
 
 func (s *Service) GetCart(userID uint) ([]general.Phone, error) {
-	user, err := s.repository.FindUserByID(userID)
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
-
-	return user.Cart, nil
+	return s.repository.GetUserCart(userID)
 }
 
 func NewService(repository Repository) *Service {
