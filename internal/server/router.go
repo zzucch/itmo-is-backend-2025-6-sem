@@ -34,7 +34,6 @@ func Setup(controllers controllers, services services) http.Handler {
 			PhoneService: services.sellService,
 			UserService:  services.userService,
 		},
-		// TODO Complexity: generated.ComplexityRoot{},
 	}
 
 	graphqlServer := handler.New(generated.NewExecutableSchema(c))
@@ -53,11 +52,9 @@ func Setup(controllers controllers, services services) http.Handler {
 	graphqlServer.Use(extension.AutomaticPersistedQuery{
 		Cache: lru.New[string](100),
 	})
-	//		srv.Use(&extension.ComplexityLimit{
-	//			Func: func(ctx context.Context, opCtx *graphql.OperationContext) int {
-	//				panic("TODO")
-	//			},
-	//		})
+
+	const complexityLimit = 2000
+	graphqlServer.Use(extension.FixedComplexityLimit(complexityLimit))
 
 	mux.Handle("/graphql", playground.Handler(
 		"The Phone Marketplace GraphQL playground",
