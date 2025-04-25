@@ -12,8 +12,8 @@ import (
 // @title Phone Marketplace API
 // @version 1.0
 // @BasePath /
-// // @host localhost:3000
-// @host 38.180.195.167:3000
+// @host localhost:3000
+// // @host 38.180.195.167:3000
 // @schemes http
 // @securityDefinitions.apikey BearerAuth
 // @in header

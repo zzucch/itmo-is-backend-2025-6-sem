@@ -25,10 +25,10 @@ func Start(logger *log.Logger, config *config.Config) error {
 
 	storage.AddData()
 
-	controllers := initControllers(logger, storage)
+	controllers, services := initControllers(logger, storage)
 
 	logger.Printf("server is running on %s", address)
-	http.ListenAndServe(address, Setup(controllers))
+	http.ListenAndServe(address, Setup(controllers, services))
 
 	return nil
 }
@@ -41,10 +41,17 @@ type controllers struct {
 	userController    *user.Controller
 }
 
+type services struct {
+	catalogService *catalog.Service
+	sellService    *sell.Service
+	cartService    *cart.Service
+	userService    *user.Service
+}
+
 func initControllers(
 	logger *log.Logger,
 	storage *storage.Storage,
-) controllers {
+) (controllers, services) {
 	commonTemplates := []string{
 		"templates/layout.html",
 		"templates/header.html",
@@ -93,10 +100,15 @@ func initControllers(
 	userService := user.NewService(storage)
 
 	return controllers{
-		index.NewController(catalogService, indexTemplate),
-		catalog.NewController(catalogService, catalogTemplate),
-		sell.NewController(sellService, sellTemplate),
-		cart.NewController(cartService, cartTemplate),
-		user.NewController(*userService, loginTemplate, signupTemplate),
-	}
+			index.NewController(catalogService, indexTemplate),
+			catalog.NewController(catalogService, catalogTemplate),
+			sell.NewController(sellService, sellTemplate),
+			cart.NewController(cartService, cartTemplate),
+			user.NewController(*userService, loginTemplate, signupTemplate),
+		}, services{
+			catalogService: catalogService,
+			sellService:    sellService,
+			cartService:    cartService,
+			userService:    userService,
+		}
 }

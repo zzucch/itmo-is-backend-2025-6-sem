@@ -5,3 +5,6 @@ run:
 
 swag:
 	@~/go/bin/swag init --parseInternal --parseDependency -g cmd/marketplace/main.go
+
+gqlgen:
+	@go run github.com/99designs/gqlgen

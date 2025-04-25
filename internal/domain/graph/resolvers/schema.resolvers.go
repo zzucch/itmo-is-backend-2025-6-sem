@@ -6,9 +6,7 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/generated"
@@ -18,13 +16,10 @@ import (
 
 // CreatePhone is the resolver for the createPhone field.
 func (r *mutationResolver) CreatePhone(ctx context.Context, input model.PhoneInput) (*model.Phone, error) {
-	userID := ctx.Value("user_id").(uint)
-
 	phone := &general.Phone{
 		Brand:       input.Brand,
 		Price:       input.Price,
 		Description: input.Description,
-		SellerID:    userID,
 	}
 
 	if err := r.PhoneService.CreatePhone(phone); err != nil {
@@ -41,9 +36,6 @@ func (r *mutationResolver) CreatePhone(ctx context.Context, input model.PhoneInp
 
 // UpdatePhone is the resolver for the updatePhone field.
 func (r *mutationResolver) UpdatePhone(ctx context.Context, id string, input model.PhoneInput) (*model.Phone, error) {
-	userID := ctx.Value("user_id").(uint)
-	isAdmin, _ := ctx.Value("is_admin").(bool)
-
 	phoneID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		return nil, err
@@ -52,10 +44,6 @@ func (r *mutationResolver) UpdatePhone(ctx context.Context, id string, input mod
 	existingPhone, err := r.PhoneService.GetPhoneByID(uint(phoneID))
 	if err != nil {
 		return nil, err
-	}
-
-	if existingPhone.SellerID != userID && !isAdmin {
-		return nil, fmt.Errorf("unauthorized")
 	}
 
 	phone := &general.Phone{
@@ -79,21 +67,9 @@ func (r *mutationResolver) UpdatePhone(ctx context.Context, id string, input mod
 
 // DeletePhone is the resolver for the deletePhone field.
 func (r *mutationResolver) DeletePhone(ctx context.Context, id string) (bool, error) {
-	userID := ctx.Value("user_id").(uint)
-	isAdmin, _ := ctx.Value("is_admin").(bool)
-
 	phoneID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		return false, err
-	}
-
-	phone, err := r.PhoneService.GetPhoneByID(uint(phoneID))
-	if err != nil {
-		return false, err
-	}
-
-	if phone.SellerID != userID && !isAdmin {
-		return false, fmt.Errorf("unauthorized")
 	}
 
 	if err := r.PhoneService.DeletePhone(uint(phoneID)); err != nil {
@@ -103,91 +79,8 @@ func (r *mutationResolver) DeletePhone(ctx context.Context, id string) (bool, er
 	return true, nil
 }
 
-// Signup is the resolver for the signup field.
-func (r *mutationResolver) Signup(ctx context.Context, input model.SignupInput) (*model.AuthPayload, error) {
-	hashedPassword, err := user.HashPassword(input.Password)
-	if err != nil {
-		return nil, err
-	}
-
-	user := &user.User{
-		Username:     input.Username,
-		Email:        input.Email,
-		PasswordHash: hashedPassword,
-		Role:         user.RoleUser,
-	}
-
-	if err := r.UserService.CreateUser(user); err != nil {
-		return nil, err
-	}
-
-	token, err := r.UserService.GenerateJWT(user)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.AuthPayload{
-		Token: token,
-		User: &model.User{
-			ID:       strconv.FormatUint(uint64(user.ID), 10),
-			Username: user.Username,
-			Email:    user.Email,
-			Role:     model.Role(user.Role),
-		},
-	}, nil
-}
-
-// Login is the resolver for the login field.
-func (r *mutationResolver) Login(ctx context.Context, input model.LoginInput) (*model.AuthPayload, error) {
-	req := user.LoginRequest{
-		Username: input.Username,
-		Password: input.Password,
-	}
-
-	user, err := r.UserService.Login(req)
-	if err != nil {
-		return nil, err
-	}
-
-	token, err := r.UserService.GenerateJWT(user)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.AuthPayload{
-		Token: token,
-		User: &model.User{
-			ID:       strconv.FormatUint(uint64(user.ID), 10),
-			Username: user.Username,
-			Email:    user.Email,
-			Role:     model.Role(user.Role),
-		},
-	}, nil
-}
-
-// Logout is the resolver for the logout field.
-func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
-	token := ctx.Value("token").(string)
-	if err := r.UserService.InvalidateToken(token); err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUserInput) (*model.User, error) {
-	userID := ctx.Value("user_id").(uint)
-	isAdmin, _ := ctx.Value("is_admin").(bool)
-
-	id, err := strconv.ParseUint(input.ID, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
-	if userID != uint(id) && !isAdmin {
-		return nil, fmt.Errorf("unauthorized")
-	}
-
 	var role user.Role
 	switch *input.Role {
 	case model.RoleAdmin:
@@ -224,16 +117,9 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 
 // DeleteUser is the resolver for the deleteUser field.
 func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, error) {
-	userID := ctx.Value("user_id").(uint)
-	isAdmin, _ := ctx.Value("is_admin").(bool)
-
 	uid, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		return false, err
-	}
-
-	if userID != uint(uid) && !isAdmin {
-		return false, fmt.Errorf("unauthorized")
 	}
 
 	if err := r.UserService.DeleteUser(uint(uid)); err != nil {
@@ -243,64 +129,8 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	return true, nil
 }
 
-// UpdateMe is the resolver for the updateMe field.
-func (r *mutationResolver) UpdateMe(ctx context.Context, input model.UpdateMeInput) (*model.User, error) {
-	userID := ctx.Value("user_id").(uint)
-
-	u, err := r.UserService.GetUserByID(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	if *input.Username != "" {
-		u.Username = *input.Username
-	}
-	if *input.Email != "" {
-		u.Email = *input.Email
-	}
-	if *input.Password != "" {
-		hashedPassword, err := user.HashPassword(*input.Password)
-		if err != nil {
-			return nil, err
-		}
-		u.PasswordHash = hashedPassword
-	}
-
-	if err := r.UserService.UpdateUser(u); err != nil {
-		return nil, err
-	}
-
-	return &model.User{
-		ID:       strconv.FormatUint(uint64(u.ID), 10),
-		Username: u.Username,
-		Email:    u.Email,
-		Role:     model.Role(u.Role),
-	}, nil
-}
-
-// DeleteMe is the resolver for the deleteMe field.
-func (r *mutationResolver) DeleteMe(ctx context.Context) (bool, error) {
-	userID := ctx.Value("user_id").(uint)
-	if err := r.UserService.DeleteUser(userID); err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-// InvalidateTokens is the resolver for the invalidateTokens field.
-func (r *mutationResolver) InvalidateTokens(ctx context.Context) (bool, error) {
-	userID := ctx.Value("user_id").(uint)
-	if err := r.UserService.InvalidateAllUserTokens(userID); err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
 // Phones is the resolver for the phones field.
 func (r *queryResolver) Phones(ctx context.Context) ([]*model.Phone, error) {
-	userID := ctx.Value("user_id").(uint)
-	isAdmin, _ := ctx.Value("is_admin").(bool)
-
 	phones, err := r.PhoneService.FindAllPhones()
 	if err != nil {
 		return nil, err
@@ -308,14 +138,12 @@ func (r *queryResolver) Phones(ctx context.Context) ([]*model.Phone, error) {
 
 	var result []*model.Phone
 	for _, phone := range phones {
-		if phone.SellerID == userID || isAdmin {
-			result = append(result, &model.Phone{
-				ID:          strconv.FormatUint(uint64(phone.ID), 10),
-				Brand:       phone.Brand,
-				Price:       phone.Price,
-				Description: phone.Description,
-			})
-		}
+		result = append(result, &model.Phone{
+			ID:          strconv.FormatUint(uint64(phone.ID), 10),
+			Brand:       phone.Brand,
+			Price:       phone.Price,
+			Description: phone.Description,
+		})
 	}
 
 	return result, nil
@@ -323,9 +151,6 @@ func (r *queryResolver) Phones(ctx context.Context) ([]*model.Phone, error) {
 
 // Phone is the resolver for the phone field.
 func (r *queryResolver) Phone(ctx context.Context, id string) (*model.Phone, error) {
-	userID := ctx.Value("user_id").(uint)
-	isAdmin, _ := ctx.Value("is_admin").(bool)
-
 	phoneID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		return nil, err
@@ -334,10 +159,6 @@ func (r *queryResolver) Phone(ctx context.Context, id string) (*model.Phone, err
 	phone, err := r.PhoneService.GetPhoneByID(uint(phoneID))
 	if err != nil {
 		return nil, err
-	}
-
-	if phone.SellerID != userID && !isAdmin {
-		return nil, fmt.Errorf("unauthorized")
 	}
 
 	return &model.Phone{
@@ -350,11 +171,6 @@ func (r *queryResolver) Phone(ctx context.Context, id string) (*model.Phone, err
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	isAdmin, _ := ctx.Value("is_admin").(bool)
-	if !isAdmin {
-		return nil, fmt.Errorf("unauthorized")
-	}
-
 	users, err := r.UserService.GetAllUsers()
 	if err != nil {
 		return nil, err
@@ -375,16 +191,9 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
-	userID := ctx.Value("user_id").(uint)
-	isAdmin, _ := ctx.Value("is_admin").(bool)
-
 	uid, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		return nil, err
-	}
-
-	if userID != uint(uid) && !isAdmin {
-		return nil, fmt.Errorf("unauthorized")
 	}
 
 	user, err := r.UserService.GetUserByID(uint(uid))
@@ -398,43 +207,6 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 		Email:    user.Email,
 		Role:     model.Role(user.Role),
 	}, nil
-}
-
-// Me is the resolver for the me field.
-func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	userID := ctx.Value("user_id").(uint)
-	user, err := r.UserService.GetUserByID(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.User{
-		ID:       strconv.FormatUint(uint64(user.ID), 10),
-		Username: user.Username,
-		Email:    user.Email,
-		Role:     model.Role(user.Role),
-	}, nil
-}
-
-// MyTokens is the resolver for the myTokens field.
-func (r *queryResolver) MyTokens(ctx context.Context) ([]*model.Token, error) {
-	userID := ctx.Value("user_id").(uint)
-	tokens, err := r.UserService.GetUserTokens(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	var result []*model.Token
-	for _, token := range tokens {
-		result = append(result, &model.Token{
-			ID:        strconv.FormatUint(uint64(token.ID), 10),
-			Token:     token.Token,
-			CreatedAt: token.CreatedAt.Format(time.RFC3339),
-			ExpiresAt: token.ExpiresAt.Format(time.RFC3339),
-		})
-	}
-
-	return result, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

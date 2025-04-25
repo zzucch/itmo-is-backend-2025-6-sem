@@ -8,17 +8,8 @@ import (
 	"strconv"
 )
 
-type AuthPayload struct {
-	Token string `json:"token"`
-	User  *User  `json:"user"`
+type Mutation struct {
 }
-
-type LoginInput struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type Mutation struct{}
 
 type Phone struct {
 	ID          string  `json:"id"`
@@ -38,25 +29,7 @@ type PhoneInput struct {
 	Description string  `json:"description"`
 }
 
-type Query struct{}
-
-type SignupInput struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type Token struct {
-	ID        string `json:"id"`
-	Token     string `json:"token"`
-	CreatedAt string `json:"createdAt"`
-	ExpiresAt string `json:"expiresAt"`
-}
-
-type UpdateMeInput struct {
-	Username *string `json:"username,omitempty"`
-	Email    *string `json:"email,omitempty"`
-	Password *string `json:"password,omitempty"`
+type Query struct {
 }
 
 type UpdateUserInput struct {
@@ -80,8 +53,8 @@ type User struct {
 type Role string
 
 const (
-	RoleUser  Role = "user"
-	RoleAdmin Role = "admin"
+	RoleUser  Role = "USER"
+	RoleAdmin Role = "ADMIN"
 )
 
 var AllRole = []Role{

@@ -1,26 +1,18 @@
 type Query {
-  phones: [Phone!]! @auth
-  phone(id: ID!): Phone @auth
+  phones: [Phone!]!
+  phone(id: ID!): Phone
   
-  users: [User!]! @auth @admin
-  user(id: ID!): User @auth
-  me: User! @auth
-  myTokens: [Token!]! @auth
+  users: [User!]!
+  user(id: ID!): User
 }
 
 type Mutation {
-  createPhone(input: PhoneInput!): Phone! @auth
-  updatePhone(id: ID!, input: PhoneInput!): Phone! @auth
-  deletePhone(id: ID!): Boolean! @auth
+  createPhone(input: PhoneInput!): Phone!
+  updatePhone(id: ID!, input: PhoneInput!): Phone!
+  deletePhone(id: ID!): Boolean!
   
-  signup(input: SignupInput!): AuthPayload!
-  login(input: LoginInput!): AuthPayload!
-  logout: Boolean! @auth
-  updateUser(input: UpdateUserInput!): User! @auth
-  deleteUser(id: ID!): Boolean! @auth
-  updateMe(input: UpdateMeInput!): User! @auth
-  deleteMe: Boolean! @auth
-  invalidateTokens: Boolean! @auth
+  updateUser(input: UpdateUserInput!): User!
+  deleteUser(id: ID!): Boolean!
 }
 
 type Phone {
@@ -44,34 +36,11 @@ type User {
   updatedAt: String!
 }
 
-type Token {
-  id: ID!
-  token: String!
-  createdAt: String!
-  expiresAt: String!
-}
-
-type AuthPayload {
-  token: String!
-  user: User!
-}
-
 input PhoneInput {
   brand: String!
   model: String!
   price: Float!
   description: String!
-}
-
-input SignupInput {
-  username: String!
-  email: String!
-  password: String!
-}
-
-input LoginInput {
-  username: String!
-  password: String!
 }
 
 input UpdateUserInput {
@@ -82,16 +51,7 @@ input UpdateUserInput {
   role: Role
 }
 
-input UpdateMeInput {
-  username: String
-  email: String
-  password: String
-}
-
 enum Role {
   USER
   ADMIN
 }
-
-directive @auth on FIELD_DEFINITION | FIELD
-directive @admin on FIELD_DEFINITION | FIELD

@@ -2,14 +2,23 @@ package server
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/lru"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
 	_ "github.com/is-web-y26/m3302-milovatskiy/docs"
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/generated"
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/resolvers"
 	"github.com/swaggo/files"
 	"github.com/swaggo/gin-swagger"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
-func Setup(controllers controllers) http.Handler {
+func Setup(controllers controllers, services services) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", controllers.indexController.Handle)
@@ -19,6 +28,42 @@ func Setup(controllers controllers) http.Handler {
 	mux.HandleFunc("/signup", controllers.userController.HandleSignupPage)
 	mux.HandleFunc("/catalog", controllers.catalogController.Handle)
 	mux.HandleFunc("/notifications", controllers.notificationsHandler)
+
+	c := generated.Config{
+		Resolvers: &resolvers.Resolver{
+			PhoneService: services.sellService,
+			UserService:  services.userService,
+		},
+		// TODO Complexity: generated.ComplexityRoot{},
+	}
+
+	graphqlServer := handler.New(generated.NewExecutableSchema(c))
+
+	graphqlServer.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+	})
+	graphqlServer.AddTransport(transport.Options{})
+	graphqlServer.AddTransport(transport.GET{})
+	graphqlServer.AddTransport(transport.POST{})
+	graphqlServer.AddTransport(transport.MultipartForm{})
+
+	graphqlServer.SetQueryCache(lru.New[*ast.QueryDocument](1000))
+
+	graphqlServer.Use(extension.Introspection{})
+	graphqlServer.Use(extension.AutomaticPersistedQuery{
+		Cache: lru.New[string](100),
+	})
+	//		srv.Use(&extension.ComplexityLimit{
+	//			Func: func(ctx context.Context, opCtx *graphql.OperationContext) int {
+	//				panic("TODO")
+	//			},
+	//		})
+
+	mux.Handle("/graphql", playground.Handler(
+		"The Phone Marketplace GraphQL playground",
+		"/query",
+	))
+	mux.Handle("/query", graphqlServer)
 
 	go func() {
 		gin.SetMode(gin.ReleaseMode)
