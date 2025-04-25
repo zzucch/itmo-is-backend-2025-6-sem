@@ -1,4 +1,4 @@
-all: swag run
+all: swag gqlgen run
 
 run:
 	@DEBUG=1 go run cmd/marketplace/main.go

@@ -21,7 +21,7 @@ type Phone {
   model: String!
   price: Float!
   description: String!
-  seller: User!
+  seller: User @goField(forceResolver: true)
   createdAt: String!
   updatedAt: String!
 }
@@ -31,7 +31,7 @@ type User {
   username: String!
   email: String!
   role: Role!
-  phones: [Phone!]!
+  phones: [Phone!] @goField(forceResolver: true)
   createdAt: String!
   updatedAt: String!
 }
@@ -55,3 +55,5 @@ enum Role {
   USER
   ADMIN
 }
+
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION

@@ -17,7 +17,7 @@ type Phone struct {
 	Model       string  `json:"model"`
 	Price       float64 `json:"price"`
 	Description string  `json:"description"`
-	Seller      *User   `json:"seller"`
+	Seller      *User   `json:"seller,omitempty"`
 	CreatedAt   string  `json:"createdAt"`
 	UpdatedAt   string  `json:"updatedAt"`
 }
@@ -45,7 +45,7 @@ type User struct {
 	Username  string   `json:"username"`
 	Email     string   `json:"email"`
 	Role      Role     `json:"role"`
-	Phones    []*Phone `json:"phones"`
+	Phones    []*Phone `json:"phones,omitempty"`
 	CreatedAt string   `json:"createdAt"`
 	UpdatedAt string   `json:"updatedAt"`
 }

@@ -7,17 +7,20 @@ package resolvers
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/generated"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/model"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/user"
+	"gorm.io/gorm"
 )
 
 // CreatePhone is the resolver for the createPhone field.
 func (r *mutationResolver) CreatePhone(ctx context.Context, input model.PhoneInput) (*model.Phone, error) {
 	phone := &general.Phone{
 		Brand:       input.Brand,
+		Name:        input.Model,
 		Price:       input.Price,
 		Description: input.Description,
 	}
@@ -29,6 +32,7 @@ func (r *mutationResolver) CreatePhone(ctx context.Context, input model.PhoneInp
 	return &model.Phone{
 		ID:          strconv.FormatUint(uint64(phone.ID), 10),
 		Brand:       phone.Brand,
+		Model:       phone.Name,
 		Price:       phone.Price,
 		Description: phone.Description,
 	}, nil
@@ -47,7 +51,11 @@ func (r *mutationResolver) UpdatePhone(ctx context.Context, id string, input mod
 	}
 
 	phone := &general.Phone{
+		Model: gorm.Model{
+			ID: existingPhone.ID,
+		},
 		Brand:       input.Brand,
+		Name:        input.Model,
 		Price:       input.Price,
 		Description: input.Description,
 		SellerID:    existingPhone.SellerID,
@@ -57,11 +65,23 @@ func (r *mutationResolver) UpdatePhone(ctx context.Context, id string, input mod
 		return nil, err
 	}
 
+	seller, err := r.UserService.GetUserByID(phone.SellerID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &model.Phone{
 		ID:          id,
 		Brand:       phone.Brand,
+		Model:       phone.Name,
 		Price:       phone.Price,
 		Description: phone.Description,
+		Seller: &model.User{
+			ID:       strconv.FormatUint(uint64(seller.ID), 10),
+			Username: seller.Username,
+			Email:    seller.Email,
+			Role:     model.Role(seller.Role),
+		},
 	}, nil
 }
 
@@ -81,21 +101,49 @@ func (r *mutationResolver) DeletePhone(ctx context.Context, id string) (bool, er
 
 // UpdateUser is the resolver for the updateUser field.
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUserInput) (*model.User, error) {
+	userID, err := strconv.ParseUint(input.ID, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	existingUser, err := r.UserService.GetUserByID(uint(userID))
+	if err != nil {
+		return nil, err
+	}
+
 	var role user.Role
-	switch *input.Role {
-	case model.RoleAdmin:
-		role = user.RoleAdmin
-	case model.RoleUser:
-		role = user.RoleUser
+	if input.Role != nil {
+		switch *input.Role {
+		case model.RoleAdmin:
+			role = user.RoleAdmin
+		case model.RoleUser:
+			role = user.RoleUser
+		}
+	} else {
+		role = existingUser.Role
+	}
+
+	username := existingUser.Username
+	if input.Username != nil {
+		username = *input.Username
+	}
+
+	email := existingUser.Email
+	if input.Email != nil {
+		email = *input.Email
 	}
 
 	u := &user.User{
-		Username: *input.Username,
-		Email:    *input.Email,
-		Role:     role,
+		Model: gorm.Model{
+			ID: existingUser.ID,
+		},
+		Username:     username,
+		Email:        email,
+		Role:         role,
+		PasswordHash: existingUser.PasswordHash,
 	}
 
-	if *input.Password != "" {
+	if input.Password != nil && *input.Password != "" {
 		hashedPassword, err := user.HashPassword(*input.Password)
 		if err != nil {
 			return nil, err
@@ -107,11 +155,33 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input model.UpdateUse
 		return nil, err
 	}
 
+	phones, err := r.PhoneService.FindAllPhones()
+	if err != nil {
+		return nil, err
+	}
+
+	var phoneModels []*model.Phone
+	for _, phone := range phones {
+		if phone.ID != u.ID {
+			continue
+		}
+
+		phoneModels = append(phoneModels, &model.Phone{
+			ID:          strconv.FormatUint(uint64(phone.ID), 10),
+			Brand:       phone.Brand,
+			Model:       phone.Name,
+			Price:       phone.Price,
+			Description: phone.Description,
+		})
+	}
+
 	return &model.User{
-		ID:       input.ID,
-		Username: u.Username,
-		Email:    u.Email,
-		Role:     model.Role(u.Role),
+		ID:        input.ID,
+		Username:  u.Username,
+		Email:     u.Email,
+		Role:      model.Role(u.Role),
+		Phones:    phoneModels,
+		UpdatedAt: time.Now().Format(time.RFC3339),
 	}, nil
 }
 
@@ -129,6 +199,39 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	return true, nil
 }
 
+// Seller is the resolver for the seller field.
+func (r *phoneResolver) Seller(ctx context.Context, obj *model.Phone) (*model.User, error) {
+	if obj.Seller != nil {
+		return obj.Seller, nil
+	}
+
+	phoneID, err := strconv.ParseUint(obj.ID, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	phone, err := r.PhoneService.GetPhoneByID(uint(phoneID))
+	if err != nil {
+		return nil, err
+	}
+
+	if phone.SellerID == 0 {
+		return nil, nil
+	}
+
+	user, err := r.UserService.GetUserByID(phone.SellerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.User{
+		ID:       strconv.FormatUint(uint64(user.ID), 10),
+		Username: user.Username,
+		Email:    user.Email,
+		Role:     model.Role(user.Role),
+	}, nil
+}
+
 // Phones is the resolver for the phones field.
 func (r *queryResolver) Phones(ctx context.Context) ([]*model.Phone, error) {
 	phones, err := r.PhoneService.FindAllPhones()
@@ -138,11 +241,27 @@ func (r *queryResolver) Phones(ctx context.Context) ([]*model.Phone, error) {
 
 	var result []*model.Phone
 	for _, phone := range phones {
+		var seller *model.User
+		if phone.SellerID != 0 {
+			user, err := r.UserService.GetUserByID(phone.SellerID)
+			if err != nil {
+				return nil, err
+			}
+			seller = &model.User{
+				ID:       strconv.FormatUint(uint64(user.ID), 10),
+				Username: user.Username,
+				Email:    user.Email,
+				Role:     model.Role(user.Role),
+			}
+		}
+
 		result = append(result, &model.Phone{
 			ID:          strconv.FormatUint(uint64(phone.ID), 10),
 			Brand:       phone.Brand,
+			Model:       phone.Name,
 			Price:       phone.Price,
 			Description: phone.Description,
+			Seller:      seller,
 		})
 	}
 
@@ -161,11 +280,27 @@ func (r *queryResolver) Phone(ctx context.Context, id string) (*model.Phone, err
 		return nil, err
 	}
 
+	var seller *model.User
+	if phone.SellerID != 0 {
+		user, err := r.UserService.GetUserByID(phone.SellerID)
+		if err != nil {
+			return nil, err
+		}
+		seller = &model.User{
+			ID:       strconv.FormatUint(uint64(user.ID), 10),
+			Username: user.Username,
+			Email:    user.Email,
+			Role:     model.Role(user.Role),
+		}
+	}
+
 	return &model.Phone{
 		ID:          id,
 		Brand:       phone.Brand,
+		Model:       phone.Name,
 		Price:       phone.Price,
 		Description: phone.Description,
+		Seller:      seller,
 	}, nil
 }
 
@@ -178,11 +313,32 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 
 	var result []*model.User
 	for _, user := range users {
+		phones, err := r.PhoneService.FindAllPhones()
+		if err != nil {
+			return nil, err
+		}
+
+		var phoneModels []*model.Phone
+		for _, phone := range phones {
+			if phone.ID != user.ID {
+				continue
+			}
+
+			phoneModels = append(phoneModels, &model.Phone{
+				ID:          strconv.FormatUint(uint64(phone.ID), 10),
+				Brand:       phone.Brand,
+				Model:       phone.Name,
+				Price:       phone.Price,
+				Description: phone.Description,
+			})
+		}
+
 		result = append(result, &model.User{
 			ID:       strconv.FormatUint(uint64(user.ID), 10),
 			Username: user.Username,
 			Email:    user.Email,
 			Role:     model.Role(user.Role),
+			Phones:   phoneModels,
 		})
 	}
 
@@ -201,21 +357,82 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 		return nil, err
 	}
 
+	phones, err := r.PhoneService.FindAllPhones()
+	if err != nil {
+		return nil, err
+	}
+
+	var phoneModels []*model.Phone
+	for _, phone := range phones {
+		if phone.ID != user.ID {
+			continue
+		}
+
+		phoneModels = append(phoneModels, &model.Phone{
+			ID:          strconv.FormatUint(uint64(phone.ID), 10),
+			Brand:       phone.Brand,
+			Model:       phone.Name,
+			Price:       phone.Price,
+			Description: phone.Description,
+		})
+	}
+
 	return &model.User{
 		ID:       id,
 		Username: user.Username,
 		Email:    user.Email,
 		Role:     model.Role(user.Role),
+		Phones:   phoneModels,
 	}, nil
+}
+
+// Phones is the resolver for the phones field.
+func (r *userResolver) Phones(ctx context.Context, obj *model.User) ([]*model.Phone, error) {
+	if len(obj.Phones) > 0 {
+		return obj.Phones, nil
+	}
+
+	userID, err := strconv.ParseUint(obj.ID, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	phones, err := r.PhoneService.FindAllPhones()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*model.Phone
+	for _, phone := range phones {
+		if phone.ID != uint(userID) {
+			continue
+		}
+
+		result = append(result, &model.Phone{
+			ID:          strconv.FormatUint(uint64(phone.ID), 10),
+			Brand:       phone.Brand,
+			Model:       phone.Name,
+			Price:       phone.Price,
+			Description: phone.Description,
+		})
+	}
+
+	return result, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
+// Phone returns generated.PhoneResolver implementation.
+func (r *Resolver) Phone() generated.PhoneResolver { return &phoneResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
+// User returns generated.UserResolver implementation.
+func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
+
+type mutationResolver struct{ *Resolver }
+type phoneResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }
