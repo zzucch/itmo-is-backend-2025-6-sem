@@ -290,7 +290,6 @@ func (c *Controller) GetMyOrders(w http.ResponseWriter, r *http.Request) {
 
 	order, err := c.service.GetOrdersByUserID(userID)
 	if err != nil {
-		println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

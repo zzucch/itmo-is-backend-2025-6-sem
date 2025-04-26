@@ -448,17 +448,15 @@ func (r *queryResolver) Phones(ctx context.Context) ([]*model.Phone, error) {
 	var result []*model.Phone
 	for _, phone := range phones {
 		var seller *model.User
-		if phone.SellerID != 0 {
-			user, err := r.UserService.GetUserByID(phone.SellerID)
-			if err != nil {
-				return nil, err
-			}
-			seller = &model.User{
-				ID:       strconv.FormatUint(uint64(user.ID), 10),
-				Username: user.Username,
-				Email:    user.Email,
-				Role:     model.Role(user.Role),
-			}
+		user, err := r.UserService.GetUserByID(phone.SellerID)
+		if err != nil {
+			return nil, err
+		}
+		seller = &model.User{
+			ID:       strconv.FormatUint(uint64(user.ID), 10),
+			Username: user.Username,
+			Email:    user.Email,
+			Role:     model.Role(user.Role),
 		}
 
 		result = append(result, &model.Phone{
@@ -769,7 +767,9 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type phoneResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type userResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	phoneResolver    struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+	userResolver     struct{ *Resolver }
+)

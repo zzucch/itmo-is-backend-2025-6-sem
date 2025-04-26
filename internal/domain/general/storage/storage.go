@@ -299,12 +299,10 @@ func (s *Storage) CreateUser(user *user.User) error {
 }
 
 func (s *Storage) FindUserByID(id uint) (*user.User, error) {
-	if id == 0 {
-		return nil, errors.New("invalid ID")
-	}
 	var user user.User
-	err := s.DB.Preload("Tokens").First(&user, id).Error
+	err := s.DB.Preload("Tokens").Preload("Cart").First(&user, id).Error
 	if err != nil {
+		fmt.Printf("Error finding user by ID %d: %v\n", id, err)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
 		}

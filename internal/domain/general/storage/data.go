@@ -6,6 +6,7 @@ import (
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/user"
+	"gorm.io/gorm"
 )
 
 func (s *Storage) AddData() {
@@ -18,10 +19,14 @@ func (s *Storage) AddData() {
 		Image: general.Image{
 			URL: "/static/images/aquos-wish-4-1.jpg",
 		},
+		SellerID: 1,
 	}
 	s.DB.Create(&salePhone)
 
 	userQwe := user.User{
+		Model: gorm.Model{
+			ID: 1,
+		},
 		Username: "qwe",
 		Email:    "q@we",
 		PasswordHash: func() string {
@@ -33,6 +38,9 @@ func (s *Storage) AddData() {
 	s.DB.Create(&userQwe)
 
 	userAdmin := user.User{
+		Model: gorm.Model{
+			ID: 2,
+		},
 		Username: "ewq",
 		Email:    "e@wq",
 		PasswordHash: func() string {
@@ -54,6 +62,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/redmi-12-5g.webp",
 			},
+			SellerID: userAdmin.ID,
 		},
 		{
 			Name:        "Samsung Galaxy Z Fold6",
@@ -64,6 +73,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/galaxy-z-fold6.jpg",
 			},
+			SellerID: userAdmin.ID,
 		},
 		{
 			Name:        "Sharp Aquos Wish 4",
@@ -74,6 +84,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/aquos-wish-4-2.jpg",
 			},
+			SellerID: userAdmin.ID,
 		},
 		{
 			Name:        "Google Pixel 9",
@@ -84,6 +95,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/pixel-9.webp",
 			},
+			SellerID: userAdmin.ID,
 		},
 	}
 	for _, phone := range newPhones {
@@ -100,6 +112,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/digno-902kc.jpeg",
 			},
+			SellerID: userAdmin.ID,
 		},
 		{
 			Name:        "Sharp Aquos 601SH",
@@ -110,6 +123,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/aquos-601sh.jpg",
 			},
+			SellerID: userAdmin.ID,
 		},
 		{
 			Name:        "Siemens A50",
@@ -120,6 +134,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/siemens-a50.jpeg",
 			},
+			SellerID: userAdmin.ID,
 		},
 		{
 			Name:        "Kyocera KYF43",
@@ -130,6 +145,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/kyocera-kyf43.jpg",
 			},
+			SellerID: userAdmin.ID,
 		},
 		{
 			Name:        "Kyocera 414 Au Marvera",
@@ -140,6 +156,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/au-marvera-kyy08.jpg",
 			},
+			SellerID: userAdmin.ID,
 		},
 		{
 			Name:        "Blackberry Key2",
@@ -150,6 +167,7 @@ func (s *Storage) AddData() {
 			Image: general.Image{
 				URL: "/static/images/blackberrry-key2.jpg",
 			},
+			SellerID: userAdmin.ID,
 		},
 	}
 	for _, phone := range featuredPhones {
