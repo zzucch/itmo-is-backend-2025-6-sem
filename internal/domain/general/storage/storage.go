@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/cart"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
@@ -14,6 +15,167 @@ import (
 
 type Storage struct {
 	DB *gorm.DB
+}
+
+func (s *Storage) CreateOrder(order *cart.Order) error {
+	if order == nil {
+		return errors.New("order cannot be nil")
+	}
+
+	tx := s.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Create(order).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to create order: %w", err)
+	}
+
+	if len(order.Phones) > 0 {
+		if err := tx.Model(order).Association("Phones").Append(order.Phones); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to add phones to order: %w", err)
+		}
+	}
+
+	if err := tx.Model(&user.User{Model: gorm.Model{ID: order.UserID}}).Association("Cart").Clear(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to clear user cart: %w", err)
+	}
+
+	return tx.Commit().Error
+}
+
+func (s *Storage) DeleteOrderByID(id uint) error {
+	if id == 0 {
+		return errors.New("invalid order ID")
+	}
+
+	result := s.DB.Delete(&cart.Order{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("order not found")
+	}
+
+	return nil
+}
+
+func (s *Storage) FindAllOrders() ([]cart.Order, error) {
+	var orders []cart.Order
+	err := s.DB.Preload("Phones").Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
+func (s *Storage) FindOrderByID(id uint) (cart.Order, error) {
+	if id == 0 {
+		return cart.Order{}, errors.New("invalid order ID")
+	}
+
+	var order cart.Order
+	err := s.DB.Preload("Phones").First(&order, id).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return cart.Order{}, errors.New("order not found")
+		}
+		return cart.Order{}, err
+	}
+
+	return order, nil
+}
+
+func (s *Storage) FindOrderByUserID(userID uint) (cart.Order, error) {
+	if userID == 0 {
+		return cart.Order{}, errors.New("invalid user ID")
+	}
+
+	var order cart.Order
+	err := s.DB.Preload("Phones").Where("user_id = ?", userID).First(&order).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return cart.Order{}, errors.New("no orders found for this user")
+		}
+		return cart.Order{}, err
+	}
+
+	return order, nil
+}
+
+func (s *Storage) GetPhonesByIDs(phoneIDs []uint) ([]general.Phone, error) {
+	if len(phoneIDs) == 0 {
+		return nil, errors.New("no phone IDs provided")
+	}
+
+	var phones []general.Phone
+	err := s.DB.Where("id IN ?", phoneIDs).Find(&phones).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(phones) != len(phoneIDs) {
+		return nil, errors.New("some phones not found")
+	}
+
+	return phones, nil
+}
+
+func (s *Storage) UpdateOrder(order *cart.Order) error {
+	if order == nil {
+		return errors.New("order cannot be nil")
+	}
+
+	if order.ID == 0 {
+		return errors.New("invalid order ID")
+	}
+
+	tx := s.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if err := tx.Model(order).Updates(order).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if len(order.Phones) > 0 {
+		if err := tx.Model(order).Association("Phones").Clear(); err != nil {
+			tx.Rollback()
+			return err
+		}
+		if err := tx.Model(order).Association("Phones").Append(order.Phones); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit().Error
+}
+
+func (s *Storage) ClearCart(userID uint) error {
+	if userID == 0 {
+		return errors.New("invalid user ID")
+	}
+
+	var user user.User
+	if err := s.DB.First(&user, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	return s.DB.Model(&user).Association("Cart").Clear()
 }
 
 func (s *Storage) AddPhoneToCart(userID uint, phoneID uint) error {

@@ -17,6 +17,9 @@ func (s *Service) PlaceOrder(userID uint, phoneIDs []uint) (*Order, error) {
 		return nil, errors.New("no phones selected")
 	}
 
+	if s.repository == nil {
+		return nil, errors.ErrUnsupported
+	}
 	phones, err := s.repository.GetPhonesByIDs(phoneIDs)
 	if err != nil {
 		return nil, err

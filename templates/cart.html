@@ -28,6 +28,22 @@
     </tfoot>
 </table>
 
+<div id="order-modal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index:1000;">
+    <div style="background-color:white; margin:100px auto; padding:20px; width:50%; border-radius:5px;">
+        <h3>Confirm Your Order</h3>
+        <div id="order-summary"></div>
+        <div style="margin-top:20px;">
+            <label for="shipping-address">Shipping Address:</label>
+            <input type="text" id="shipping-address" style="width:100%; padding:8px; margin-bottom:10px;" required>
+        </div>
+        <div style="margin-top:10px; text-align:right;">
+            <button onclick="document.getElementById('order-modal').style.display='none'">Cancel</button>
+            <button onclick="confirmOrder()" style="margin-left:10px;">Place Order</button>
+        </div>
+    </div>
+</div>
+
 <script>
     function displayCart(cartItems) {
         const cartTable = document.getElementById("cart-items");
@@ -44,6 +60,7 @@
         cartItems.forEach((item) => {
             const itemRow = document.createElement("tr");
             itemRow.className = "cart-item";
+            itemRow.dataset.itemId = item.ID;
 
             const propertiesToShow = {
                 Name: item.Name || "Unknown Item",
@@ -81,16 +98,114 @@
                 displayCart(data);
             })
             .catch(error => {
-                alert("Error loading cart:", error);
+                alert("Error loading cart: " + error.message);
                 document.getElementById("cart-items").innerHTML = `
-        <tr>
-          <td colspan="4" class="error-message">
-            Error loading cart: ${error.message}
-            <button onclick="loadCart()">Retry</button>
-          </td>
-        </tr>
-      `;
+                    <tr>
+                        <td colspan="4" class="error-message">
+                            Error loading cart: ${error.message}
+                            <button onclick="loadCart()">Retry</button>
+                        </td>
+                    </tr>
+                `;
             });
+    }
+
+    async function removeFromCart(itemId) {
+        if (!confirm("Are you sure you want to remove this item from your cart?")) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/users/me/cart/${itemId}`, {
+                method: 'DELETE'
+            });
+
+            const text = await response.text();
+
+            if (!response.ok) {
+                throw new Error(`Error removing item: ${text}`);
+            }
+
+            alert(text);
+            loadCart();
+        } catch (error) {
+            alert("Failed to remove item: " + error.message);
+        }
+    }
+
+    function checkout() {
+        fetch('/api/users/me/cart')
+            .then(response => {
+                if (!response.ok) throw new Error(`Error loading cart: ${response.status}`);
+                return response.json();
+            })
+            .then(cartItems => {
+                if (!cartItems || cartItems.length === 0) {
+                    alert("Your cart is empty!");
+                    return;
+                }
+
+                const orderSummary = document.getElementById("order-summary");
+                let total = 0;
+                orderSummary.innerHTML = "<ul>";
+
+                cartItems.forEach(item => {
+                    orderSummary.innerHTML += `<li>${item.Name || 'Unknown Item'} - $${(item.Price || 0).toFixed(2)}</li>`;
+                    total += item.Price || 0;
+                });
+
+                orderSummary.innerHTML += `</ul><p><strong>Total: $${total.toFixed(2)}</strong></p>`;
+
+                document.getElementById("order-modal").style.display = "block";
+            })
+            .catch(error => {
+                alert("Error during checkout: " + error.message);
+            });
+    }
+
+    async function confirmOrder() {
+        const shippingAddress = document.getElementById("shipping-address").value;
+        if (!shippingAddress.trim()) {
+            alert("Please enter a shipping address");
+            return;
+        }
+
+        try {
+            const cartResponse = await fetch('/api/users/me/cart');
+            if (!cartResponse.ok) throw new Error('Failed to load cart items');
+            const cartItems = await cartResponse.json();
+
+            if (!cartItems || cartItems.length === 0) {
+                alert("Your cart is empty! Please add items before placing an order.");
+                return;
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('shipping_address', shippingAddress);
+            cartItems.forEach(item => {
+                formData.append('phone_ids', item.ID.toString());
+            });
+
+            const orderResponse = await fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            });
+
+            if (!orderResponse.ok) {
+                const errorText = await orderResponse.text();
+                throw new Error(errorText);
+            }
+
+            const result = await orderResponse.json();
+            alert(`Order #${result.order_id} placed successfully!`);
+            document.getElementById("order-modal").style.display = "none";
+            loadCart();
+        } catch (error) {
+            alert(error.message);
+        }
     }
 
     document.addEventListener("DOMContentLoaded", loadCart);

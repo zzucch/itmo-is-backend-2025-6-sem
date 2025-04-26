@@ -62,41 +62,55 @@ func (c *Controller) Handle(
 // @Failure 400 {string} string "Invalid user ID or phone ID"
 // @Failure 405 {string} string "Method not allowed"
 // @Failure 500 {string} string "Internal server error"
-func (c *Controller) CreateOrder(responseWriter http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodPost {
-		http.Error(responseWriter, "Invalid request method", http.StatusMethodNotAllowed)
+func (c *Controller) CreateOrder(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
-	userIDStr := request.FormValue("user_id")
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		http.Error(responseWriter, "Invalid user ID", http.StatusBadRequest)
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	request.ParseForm()
-	phoneIDStrings := request.Form["phone_ids"]
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		return
+	}
 
-	var phoneIDs []uint
-	for _, idStr := range phoneIDStrings {
-		id, err := strconv.Atoi(idStr)
+	shippingAddress := r.PostFormValue("shipping_address")
+	if shippingAddress == "" {
+		http.Error(w, "Shipping address is required", http.StatusBadRequest)
+		return
+	}
+
+	phoneIDs := make([]uint, 0)
+	for _, idStr := range r.PostForm["phone_ids"] {
+		id, err := strconv.ParseUint(idStr, 10, 32)
 		if err != nil {
-			http.Error(responseWriter, "Invalid phone ID", http.StatusBadRequest)
+			http.Error(w, "Invalid phone ID: "+idStr, http.StatusBadRequest)
 			return
 		}
 		phoneIDs = append(phoneIDs, uint(id))
 	}
 
-	order, err := c.service.PlaceOrder(uint(userID), phoneIDs)
-	if err != nil {
-		http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+	if len(phoneIDs) == 0 {
+		http.Error(w, "No phones selected", http.StatusBadRequest)
 		return
 	}
 
-	responseWriter.Write(
-		[]byte("order ID: " + strconv.Itoa(int(order.ID))),
-	)
+	order, err := c.service.PlaceOrder(uint(userID), phoneIDs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"order_id": order.ID,
+		"message":  "Order placed successfully",
+	})
 }
 
 // @Summary Retrieves all orders

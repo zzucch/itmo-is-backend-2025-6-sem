@@ -103,7 +103,7 @@ func initControllers(
 
 	sellService := sell.NewService(storage, s3Client)
 	catalogService := catalog.NewService(storage)
-	cartService := &cart.Service{}
+	cartService := cart.NewService(storage)
 	userService := user.NewService(storage)
 
 	return controllers{
