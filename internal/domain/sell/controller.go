@@ -2,6 +2,7 @@ package sell
 
 import (
 	"encoding/json"
+	"errors"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -51,41 +52,87 @@ func (c *Controller) Handle(
 // @Security BearerAuth
 // @Param request body general.Phone true "Phone details"
 // @Success 201
-func (c *Controller) HandleCreatePhone(
-	responseWriter http.ResponseWriter,
-	request *http.Request,
-) {
-	if request.Method != http.MethodPost {
+func (c *Controller) HandleCreatePhone(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
 		http.Error(
-			responseWriter,
+			w,
 			"invalid request method",
 			http.StatusMethodNotAllowed,
 		)
 		return
 	}
 
-	var phone general.Phone
-	if err := json.NewDecoder(request.Body).Decode(&phone); err != nil {
-		http.Error(
-			responseWriter,
-			"invalid request body: "+err.Error(),
-			http.StatusBadRequest,
-		)
-
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		http.Error(w, "Failed to parse multipart form", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := request.Context().Value("user_id").(uint)
+	userID, ok := r.Context().Value("user_id").(uint)
 	if !ok {
-		http.Error(responseWriter, "unauthorized", http.StatusUnauthorized)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	phone.SellerID = userID
+	phone := &general.Phone{
+		Name:        r.FormValue("Name"),
+		Description: r.FormValue("Description"),
+		Brand:       r.FormValue("Brand"),
+		CPU:         r.FormValue("CPU"),
+		ScreenSize:  r.FormValue("ScreenSize"),
+		Camera:      r.FormValue("Camera"),
+		Battery:     r.FormValue("Battery"),
+		Storage:     r.FormValue("Storage"),
+		Issues:      r.FormValue("Issues"),
+		Condition:   general.Condition(r.FormValue("Condition")),
+		SellerID:    userID,
+	}
 
-	if err := c.service.CreatePhone(&phone); err != nil {
+	if priceStr := r.FormValue("Price"); priceStr != "" {
+		price, err := strconv.ParseFloat(priceStr, 64)
+		if err != nil {
+			priceInt, err := strconv.ParseInt(priceStr, 10, 64)
+			if err != nil {
+				http.Error(w, "Invalid price format "+err.Error(), http.StatusBadRequest)
+				return
+			}
+			price = float64(priceInt)
+		}
+		phone.Price = price
+	}
+
+	if isUsedStr := r.FormValue("IsUsed"); isUsedStr != "" {
+		isUsed, err := strconv.ParseBool(isUsedStr)
+		if err != nil {
+			http.Error(w, "Invalid IsUsed format", http.StatusBadRequest)
+			return
+		}
+		phone.IsUsed = isUsed
+	}
+
+	if err := general.ValidateCondition(phone.Condition); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	file, header, err := r.FormFile("image")
+	if err == nil {
+		defer file.Close()
+
+		imageURL, err := c.service.s3Client.UploadFile(r.Context(), file, header.Filename)
+		if err != nil {
+			http.Error(w, "Failed to upload image: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		phone.URL = imageURL
+	} else if !errors.Is(err, http.ErrMissingFile) {
+		http.Error(w, "Failed to process image", http.StatusBadRequest)
+		return
+	}
+
+	if err := c.service.CreatePhone(phone); err != nil {
 		http.Error(
-			responseWriter,
+			w,
 			"failed to create phone"+err.Error(),
 			http.StatusInternalServerError,
 		)
@@ -93,7 +140,7 @@ func (c *Controller) HandleCreatePhone(
 		return
 	}
 
-	responseWriter.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // @Summary lists user's phones

@@ -12,8 +12,15 @@
             <label for="current-specification" class="label-specification">Specification:</label>
             <div id="specification-display" class="current-specification"></div>
 
-            <label for="value" class="label-value">Enter the value:</label>
-            <input type="text" id="value" name="value" required class="input-field">
+            <div id="value-input">
+                <label for="value" class="label-value">Enter the value:</label>
+                <input type="text" id="value" name="value" class="input-field">
+            </div>
+
+            <div id="image-upload-container" style="display: none;">
+                <label for="image-upload" class="label-value">Upload image:</label>
+                <input type="file" id="image-upload" name="image" accept="image/*">
+            </div>
         </div>
         <button type="submit" class="add-specifications-button">Add to specifications</button>
     </form>

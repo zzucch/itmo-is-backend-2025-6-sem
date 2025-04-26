@@ -11,12 +11,18 @@ import (
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/index"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/storage"
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/storage/s3"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/sell"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/user"
 )
 
 func Start(logger *log.Logger, config *config.Config) error {
 	address := fmt.Sprintf(":%s", config.Port)
+
+	s3Client, err := s3.NewS3Client()
+	if err != nil {
+		log.Fatalf("Failed to create S3 client: %v", err)
+	}
 
 	storage, err := storage.New(config.DSN)
 	if err != nil {
@@ -25,7 +31,7 @@ func Start(logger *log.Logger, config *config.Config) error {
 
 	storage.AddData()
 
-	controllers, services := initControllers(logger, storage)
+	controllers, services := initControllers(logger, storage, s3Client)
 
 	logger.Printf("server is running on %s", address)
 	http.ListenAndServe(address, Setup(controllers, services))
@@ -51,6 +57,7 @@ type services struct {
 func initControllers(
 	logger *log.Logger,
 	storage *storage.Storage,
+	s3Client *s3.S3Client,
 ) (controllers, services) {
 	commonTemplates := []string{
 		"templates/layout.html",
@@ -94,7 +101,7 @@ func initControllers(
 		logger.Fatal(err)
 	}
 
-	sellService := sell.NewService(storage)
+	sellService := sell.NewService(storage, s3Client)
 	catalogService := catalog.NewService(storage)
 	cartService := &cart.Service{}
 	userService := user.NewService(storage)

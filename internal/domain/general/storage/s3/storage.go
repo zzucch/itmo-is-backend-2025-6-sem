@@ -1,0 +1,75 @@
+package s3
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"log"
+	"mime/multipart"
+	"path/filepath"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+)
+
+type resolverV2 struct{}
+
+type S3Client struct {
+	client     *s3.Client
+	bucketName string
+}
+
+func NewS3Client() (*S3Client, error) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+
+	client := s3.NewFromConfig(cfg)
+
+	if _, err := client.ListBuckets(
+		context.TODO(),
+		&s3.ListBucketsInput{},
+	); err != nil {
+		log.Fatal(err)
+	}
+
+	return &S3Client{
+		client:     client,
+		bucketName: "idk-second",
+	}, nil
+}
+
+func (s *S3Client) UploadFile(
+	ctx context.Context,
+	file multipart.File,
+	fileName string,
+) (string, error) {
+	ext := filepath.Ext(fileName)
+	newFileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, file); err != nil {
+		return "", err
+	}
+
+	if _, err := s.client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(s.bucketName),
+		Key:    aws.String(newFileName),
+		Body:   bytes.NewReader(buf.Bytes()),
+		ACL:    "public-read",
+	}); err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf(
+		"https://storage.yandexcloud.net/%s/%s",
+		s.bucketName,
+		newFileName,
+	)
+
+	return url, nil
+}

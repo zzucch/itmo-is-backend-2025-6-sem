@@ -11,6 +11,7 @@ const specifications = [
   "IsUsed",
   "Issues",
   "Condition",
+  "Image",
 ];
 
 let currentSpecificationIndex = 0;
@@ -20,31 +21,59 @@ function addSpecifications(event) {
   event.preventDefault();
 
   const specification = specifications[currentSpecificationIndex];
-  let value = document.getElementById("value").value.trim();
+  let value;
 
-  if (!value) {
-    alert("Please enter a value for the specification.");
-    return;
-  }
+  if (specification === "Image") {
+    const fileInput = document.getElementById("image-upload");
+    const file = fileInput.files[0];
 
-  if (specification === "IsUsed") {
-    value = value.toLowerCase() === "true";
-  } else if (specification === "Price") {
-    value = parseFloat(value);
-    if (isNaN(value)) {
-      alert("Please enter a valid price.");
+    if (!file) {
+      alert("Please select an image file.");
       return;
     }
-  }
 
-  phoneDetails[specification] = value;
-  currentSpecificationIndex++;
+    if (!file.type.match("image.*")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    phoneDetails.ImageFile = file;
+    currentSpecificationIndex++;
+  } else {
+    value = document.getElementById("value").value.trim();
+
+    if (!value) {
+      alert("Please enter a value for the specification.");
+      return;
+    }
+
+    if (specification === "IsUsed") {
+      value = value.toLowerCase() === "true";
+    } else if (specification === "Price") {
+      value = parseFloat(value);
+      if (isNaN(value)) {
+        alert("Please enter a valid price.");
+        return;
+      }
+    }
+
+    phoneDetails[specification] = value;
+    currentSpecificationIndex++;
+  }
 
   updateTable();
 
   if (currentSpecificationIndex < specifications.length) {
     document.getElementById("specification-display").textContent =
       specifications[currentSpecificationIndex];
+
+    if (specifications[currentSpecificationIndex] === "Image") {
+      document.getElementById("value-input").style.display = "none";
+      document.getElementById("image-upload-container").style.display = "block";
+    } else {
+      document.getElementById("value-input").style.display = "block";
+      document.getElementById("image-upload-container").style.display = "none";
+    }
   } else {
     document.getElementById("add-specification-form").style.display = "none";
     document.getElementById("submit-button").style.display = "block";
@@ -77,10 +106,21 @@ function updateTable() {
 
 async function confirmListing() {
   try {
+    const formData = new FormData();
+
+    for (const key in phoneDetails) {
+      if (key !== "ImageFile") {
+        formData.append(key, phoneDetails[key]);
+      }
+    }
+
+    if (phoneDetails.ImageFile) {
+      formData.append("image", phoneDetails.ImageFile);
+    }
+
     const response = await fetch("/api/phones", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(phoneDetails),
+      body: formData,
     });
 
     if (response.ok) {
@@ -90,6 +130,7 @@ async function confirmListing() {
       }, 3000);
 
       resetForm();
+      fetchPhones();
     } else {
       const text = await response.text();
       alert(text);
@@ -107,6 +148,9 @@ function resetForm() {
   document.getElementById("add-specification-form").style.display = "block";
   document.getElementById("submit-button").style.display = "none";
   document.getElementById("table-container").innerHTML = "";
+  document.getElementById("value-input").style.display = "block";
+  document.getElementById("image-upload-container").style.display = "none";
+  document.getElementById("image-upload").value = "";
 }
 
 async function fetchPhones() {
