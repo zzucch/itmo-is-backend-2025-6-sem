@@ -11,8 +11,8 @@ type cachedItem struct {
 }
 
 type cache struct {
-	items map[string]cachedItem
 	mu    sync.RWMutex
+	items map[string]cachedItem
 	ttl   time.Duration
 }
 

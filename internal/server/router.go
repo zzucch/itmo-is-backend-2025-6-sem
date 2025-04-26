@@ -31,9 +31,10 @@ func Setup(controllers controllers, services services) http.Handler {
 
 	c := generated.Config{
 		Resolvers: &resolvers.Resolver{
-			PhoneService: services.sellService,
-			UserService:  services.userService,
-			CartService:  services.cartService,
+			PhoneService:   services.sellService,
+			UserService:    services.userService,
+			CartService:    services.cartService,
+			CatalogService: services.catalogService,
 		},
 	}
 

@@ -5,10 +5,16 @@ type Query {
   users: [User!]!
   user(id: ID!): User
 
-  
   orders: [Order!]!
   order(id: ID!): Order
   userOrders(userId: ID!): [Order!]!
+  
+  catalogs: [Catalog!]!
+  catalog(id: ID!): Catalog
+  userCatalogs(userId: ID!): [Catalog!]!
+  salePhone: Phone
+  featuredPhones: [Phone!]!
+  newPhones: [Phone!]!
 }
 
 type Mutation {
@@ -22,6 +28,12 @@ type Mutation {
   createOrder(input: OrderInput!): Order!
   updateOrderStatus(id: ID!, status: OrderStatus!): Order!
   deleteOrder(id: ID!): Boolean!
+
+  createCatalog(input: CatalogInput!): Catalog!
+  updateCatalog(id: ID!, input: CatalogInput!): Catalog!
+  deleteCatalog(id: ID!): Boolean!
+  addPhoneToCatalog(catalogId: ID!, phoneId: ID!): Catalog!
+  removePhoneFromCatalog(catalogId: ID!, phoneId: ID!): Catalog!
 }
 
 type Phone {
@@ -86,6 +98,19 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+type Catalog {
+  id: ID!
+  name: String!
+  phones: [Phone!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input CatalogInput {
+  name: String!
+  phoneIDs: [ID!]
 }
 
 directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION

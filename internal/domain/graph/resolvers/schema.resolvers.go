@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/cart"
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/generated"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/model"
@@ -258,6 +259,152 @@ func (r *mutationResolver) DeleteOrder(ctx context.Context, id string) (bool, er
 	return true, nil
 }
 
+// CreateCatalog is the resolver for the createCatalog field.
+func (r *mutationResolver) CreateCatalog(ctx context.Context, input model.CatalogInput) (*model.Catalog, error) {
+	var phoneIDs []uint
+	for _, pid := range input.PhoneIDs {
+		id, err := strconv.ParseUint(pid, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+		phoneIDs = append(phoneIDs, uint(id))
+	}
+
+	phones := make([]general.Phone, 0, len(phoneIDs))
+	for _, id := range phoneIDs {
+		phone, err := r.PhoneService.GetPhoneByID(uint(id))
+		if err != nil {
+			return nil, err
+		}
+		phones = append(phones, *phone)
+	}
+
+	catalog := &catalog.Catalog{
+		Name:   input.Name,
+		Phones: phones,
+	}
+
+	if err := r.CatalogService.CreateCatalog(catalog); err != nil {
+		return nil, err
+	}
+
+	return convertToModelCatalog(catalog), nil
+}
+
+// UpdateCatalog is the resolver for the updateCatalog field.
+func (r *mutationResolver) UpdateCatalog(ctx context.Context, id string, input model.CatalogInput) (*model.Catalog, error) {
+	catalogID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	existingCatalog, err := r.CatalogService.GetCatalogByID(uint(catalogID))
+	if err != nil {
+		return nil, err
+	}
+
+	updatedCatalog := &catalog.Catalog{
+		Model: gorm.Model{
+			ID: existingCatalog.ID,
+		},
+		Name: input.Name,
+	}
+
+	if err := r.CatalogService.UpdateCatalog(updatedCatalog); err != nil {
+		return nil, err
+	}
+
+	phones := make([]general.Phone, 0, len(input.PhoneIDs))
+	if input.PhoneIDs != nil {
+		for _, id := range input.PhoneIDs {
+			uintID, err := strconv.ParseUint(id, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			phone, err := r.PhoneService.GetPhoneByID(uint(uintID))
+			if err != nil {
+				return nil, err
+			}
+			phones = append(phones, *phone)
+		}
+	}
+
+	return convertToModelCatalog(updatedCatalog), nil
+}
+
+// DeleteCatalog is the resolver for the deleteCatalog field.
+func (r *mutationResolver) DeleteCatalog(ctx context.Context, id string) (bool, error) {
+	catalogID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.CatalogService.DeleteCatalog(uint(catalogID)); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// AddPhoneToCatalog is the resolver for the addPhoneToCatalog field.
+func (r *mutationResolver) AddPhoneToCatalog(ctx context.Context, catalogID string, phoneID string) (*model.Catalog, error) {
+	cid, err := strconv.ParseUint(catalogID, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	pid, err := strconv.ParseUint(phoneID, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	catalog, err := r.CatalogService.GetCatalogByID(uint(cid))
+	if err != nil {
+		return nil, err
+	}
+
+	phoneIDs := make([]string, 0, len(catalog.Phones)+1)
+	for _, phone := range catalog.Phones {
+		phoneIDs = append(phoneIDs, strconv.FormatUint(uint64(phone.ID), 10))
+	}
+	phoneIDs = append(phoneIDs, strconv.FormatUint(pid, 10))
+
+	return r.UpdateCatalog(ctx, strconv.FormatUint(uint64(catalog.ID), 10), model.CatalogInput{
+		Name:     catalog.Name,
+		PhoneIDs: phoneIDs,
+	})
+}
+
+// RemovePhoneFromCatalog is the resolver for the removePhoneFromCatalog field.
+func (r *mutationResolver) RemovePhoneFromCatalog(ctx context.Context, catalogID string, phoneID string) (*model.Catalog, error) {
+	cid, err := strconv.ParseUint(catalogID, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	pid, err := strconv.ParseUint(phoneID, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	catalog, err := r.CatalogService.GetCatalogByID(uint(cid))
+	if err != nil {
+		return nil, err
+	}
+
+	phoneIDs := make([]string, 0, len(catalog.Phones)+1)
+	for _, phone := range catalog.Phones {
+		if phone.ID == uint(pid) {
+			continue
+		}
+		phoneIDs = append(phoneIDs, strconv.FormatUint(uint64(phone.ID), 10))
+	}
+
+	return r.UpdateCatalog(ctx, strconv.FormatUint(uint64(catalog.ID), 10), model.CatalogInput{
+		Name:     catalog.Name,
+		PhoneIDs: phoneIDs,
+	})
+}
+
 // Seller is the resolver for the seller field.
 func (r *phoneResolver) Seller(ctx context.Context, obj *model.Phone) (*model.User, error) {
 	if obj.Seller != nil {
@@ -492,6 +639,90 @@ func (r *queryResolver) UserOrders(ctx context.Context, userID string) ([]*model
 	return result, nil
 }
 
+// Catalogs is the resolver for the catalogs field.
+func (r *queryResolver) Catalogs(ctx context.Context) ([]*model.Catalog, error) {
+	catalogs, err := r.CatalogService.GetAllCatalogs()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*model.Catalog
+	for _, catalog := range catalogs {
+		result = append(result, convertToModelCatalog(&catalog))
+	}
+	return result, nil
+}
+
+// Catalog is the resolver for the catalog field.
+func (r *queryResolver) Catalog(ctx context.Context, id string) (*model.Catalog, error) {
+	catalogID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	catalog, err := r.CatalogService.GetCatalogByID(uint(catalogID))
+	if err != nil {
+		return nil, err
+	}
+	return convertToModelCatalog(&catalog), nil
+}
+
+// UserCatalogs is the resolver for the userCatalogs field.
+func (r *queryResolver) UserCatalogs(ctx context.Context, userID string) ([]*model.Catalog, error) {
+	uid, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	catalogs, err := r.CatalogService.FindCatalogsByUserID(uint(uid))
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*model.Catalog
+	for _, catalog := range catalogs {
+		result = append(result, convertToModelCatalog(&catalog))
+	}
+	return result, nil
+}
+
+// SalePhone is the resolver for the salePhone field.
+func (r *queryResolver) SalePhone(ctx context.Context) (*model.Phone, error) {
+	phone, err := r.CatalogService.GetSalePhone()
+	if err != nil {
+		return nil, err
+	}
+	return convertToModelPhone(&phone), nil
+}
+
+// FeaturedPhones is the resolver for the featuredPhones field.
+func (r *queryResolver) FeaturedPhones(ctx context.Context) ([]*model.Phone, error) {
+	phones, err := r.CatalogService.GetFeaturedPhones()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*model.Phone
+	for _, phone := range phones {
+		result = append(result, convertToModelPhone(&phone))
+	}
+	return result, nil
+}
+
+// NewPhones is the resolver for the newPhones field.
+func (r *queryResolver) NewPhones(ctx context.Context) ([]*model.Phone, error) {
+	phones, err := r.CatalogService.GetNewPhones()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*model.Phone
+	for _, phone := range phones {
+		result = append(result, convertToModelPhone(&phone))
+	}
+	return result, nil
+}
+
 // Phones is the resolver for the phones field.
 func (r *userResolver) Phones(ctx context.Context, obj *model.User) ([]*model.Phone, error) {
 	if len(obj.Phones) > 0 {
@@ -538,9 +769,7 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	phoneResolver    struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-	userResolver     struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type phoneResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }

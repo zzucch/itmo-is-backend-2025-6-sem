@@ -8,6 +8,19 @@ import (
 	"strconv"
 )
 
+type Catalog struct {
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Phones    []*Phone `json:"phones"`
+	CreatedAt string   `json:"createdAt"`
+	UpdatedAt string   `json:"updatedAt"`
+}
+
+type CatalogInput struct {
+	Name     string   `json:"name"`
+	PhoneIDs []string `json:"phoneIDs,omitempty"`
+}
+
 type Mutation struct {
 }
 
