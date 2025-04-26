@@ -44,6 +44,11 @@
     </div>
 </div>
 
+<h2 style="margin-top: 40px;">Your Order History</h2>
+<div id="order-history">
+    <p>Loading your orders...</p>
+</div>
+
 <script>
     function displayCart(cartItems) {
         const cartTable = document.getElementById("cart-items");
@@ -209,6 +214,76 @@
     }
 
     document.addEventListener("DOMContentLoaded", loadCart);
+
+    function displayOrders(orders) {
+        const orderHistoryDiv = document.getElementById("order-history");
+
+        if (!orders || orders.length === 0) {
+            orderHistoryDiv.innerHTML = "<p>You haven't placed any orders yet.</p>";
+            return;
+        }
+
+        let html = `
+        <table border="1" width="100%" style="margin-top: 20px;">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        orders.forEach(order => {
+            const orderDate = new Date(order.CreatedAt).toLocaleDateString();
+            let total = 0;
+            let itemsHtml = '<ul style="margin: 0; padding-left: 20px;">';
+
+            order.Phones.forEach(phone => {
+                itemsHtml += `<li>${phone.Name} - $${phone.Price.toFixed(2)}</li>`;
+                total += phone.Price;
+            });
+
+            itemsHtml += '</ul>';
+
+            html += `
+                <tr>
+                    <td>#${order.ID}</td>
+                    <td>${orderDate}</td>
+                    <td>${itemsHtml}</td>
+                    <td>$${total.toFixed(2)}</td>
+                    <td>${order.Status || 'Processing'}</td>
+                </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        orderHistoryDiv.innerHTML = html;
+    }
+
+    function loadOrders() {
+        fetch('/api/orders/me')
+            .then(response => {
+                if (!response.ok) return response.text().then(text => {throw new Error(text)});
+                return response.json();
+            })
+            .then(data => {
+                displayOrders(data);
+            })
+            .catch(error => {
+                document.getElementById("order-history").innerHTML = `
+                    <p class="error-message">
+                        ${error.message}
+                        <button onclick="loadOrders()">Retry</button>
+                    </p>`;
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadCart();
+        loadOrders();
+    });
 </script>
 
 {{ end }}

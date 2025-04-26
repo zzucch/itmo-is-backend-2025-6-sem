@@ -92,21 +92,21 @@ func (s *Storage) FindOrderByID(id uint) (cart.Order, error) {
 	return order, nil
 }
 
-func (s *Storage) FindOrderByUserID(userID uint) (cart.Order, error) {
+func (s *Storage) FindOrdersByUserID(userID uint) ([]cart.Order, error) {
 	if userID == 0 {
-		return cart.Order{}, errors.New("invalid user ID")
+		return []cart.Order{}, errors.New("invalid user ID")
 	}
 
-	var order cart.Order
-	err := s.DB.Preload("Phones").Where("user_id = ?", userID).First(&order).Error
+	var orders []cart.Order
+	err := s.DB.Preload("Phones").Where("user_id = ?", userID).Find(&orders).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return cart.Order{}, errors.New("no orders found for this user")
+			return []cart.Order{}, nil
 		}
-		return cart.Order{}, err
+		return []cart.Order{}, err
 	}
 
-	return order, nil
+	return orders, nil
 }
 
 func (s *Storage) GetPhonesByIDs(phoneIDs []uint) ([]general.Phone, error) {

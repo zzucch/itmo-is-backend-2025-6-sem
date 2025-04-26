@@ -288,14 +288,15 @@ func (c *Controller) GetMyOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orders, err := c.service.GetOrdersByUserID(userID)
+	order, err := c.service.GetOrdersByUserID(userID)
 	if err != nil {
+		println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(orders); err != nil {
+	if err := json.NewEncoder(w).Encode(order); err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 	}
 }

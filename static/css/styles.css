@@ -913,3 +913,11 @@ input[type="number"] {
     background-color: var(--text-dark);
     color: var(--bg);
 }
+
+.error-message {
+    color: red;
+}
+
+#order-history {
+    margin-bottom: 40px;
+}

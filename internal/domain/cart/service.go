@@ -38,8 +38,8 @@ func (s *Service) PlaceOrder(userID uint, phoneIDs []uint) (*Order, error) {
 	return order, nil
 }
 
-func (s *Service) GetOrdersByUserID(userID uint) (Order, error) {
-	return s.repository.FindOrderByUserID(userID)
+func (s *Service) GetOrdersByUserID(userID uint) ([]Order, error) {
+	return s.repository.FindOrdersByUserID(userID)
 }
 
 func (s *Service) DeleteOrder(id uint) error {

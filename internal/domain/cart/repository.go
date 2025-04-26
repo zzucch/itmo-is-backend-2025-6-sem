@@ -7,7 +7,7 @@ import (
 type Repository interface {
 	CreateOrder(order *Order) error
 	GetPhonesByIDs(phoneIDs []uint) ([]general.Phone, error)
-	FindOrderByUserID(userID uint) (Order, error)
+	FindOrdersByUserID(userID uint) ([]Order, error)
 	FindOrderByID(id uint) (Order, error)
 	DeleteOrderByID(id uint) error
 	UpdateOrder(order *Order) error
