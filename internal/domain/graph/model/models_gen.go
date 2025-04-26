@@ -11,6 +11,21 @@ import (
 type Mutation struct {
 }
 
+type Order struct {
+	ID        string      `json:"id"`
+	User      *User       `json:"user"`
+	Phones    []*Phone    `json:"phones"`
+	Status    OrderStatus `json:"status"`
+	CreatedAt string      `json:"createdAt"`
+	UpdatedAt string      `json:"updatedAt"`
+}
+
+type OrderInput struct {
+	UserID          string   `json:"userId"`
+	PhoneIDs        []string `json:"phoneIDs"`
+	ShippingAddress string   `json:"shippingAddress"`
+}
+
 type Phone struct {
 	ID          string  `json:"id"`
 	Brand       string  `json:"brand"`
@@ -48,6 +63,53 @@ type User struct {
 	Phones    []*Phone `json:"phones,omitempty"`
 	CreatedAt string   `json:"createdAt"`
 	UpdatedAt string   `json:"updatedAt"`
+}
+
+type OrderStatus string
+
+const (
+	OrderStatusPending    OrderStatus = "PENDING"
+	OrderStatusProcessing OrderStatus = "PROCESSING"
+	OrderStatusShipped    OrderStatus = "SHIPPED"
+	OrderStatusDelivered  OrderStatus = "DELIVERED"
+	OrderStatusCancelled  OrderStatus = "CANCELLED"
+)
+
+var AllOrderStatus = []OrderStatus{
+	OrderStatusPending,
+	OrderStatusProcessing,
+	OrderStatusShipped,
+	OrderStatusDelivered,
+	OrderStatusCancelled,
+}
+
+func (e OrderStatus) IsValid() bool {
+	switch e {
+	case OrderStatusPending, OrderStatusProcessing, OrderStatusShipped, OrderStatusDelivered, OrderStatusCancelled:
+		return true
+	}
+	return false
+}
+
+func (e OrderStatus) String() string {
+	return string(e)
+}
+
+func (e *OrderStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = OrderStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid OrderStatus", str)
+	}
+	return nil
+}
+
+func (e OrderStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type Role string

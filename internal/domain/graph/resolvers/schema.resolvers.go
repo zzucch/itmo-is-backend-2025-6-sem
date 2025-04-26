@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/cart"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/generated"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/model"
@@ -199,6 +200,64 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, id string) (bool, err
 	return true, nil
 }
 
+// CreateOrder is the resolver for the createOrder field.
+func (r *mutationResolver) CreateOrder(ctx context.Context, input model.OrderInput) (*model.Order, error) {
+	userID, err := strconv.ParseUint(input.UserID, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	var phoneIDs []uint
+	for _, pid := range input.PhoneIDs {
+		id, err := strconv.ParseUint(pid, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+		phoneIDs = append(phoneIDs, uint(id))
+	}
+
+	order, err := r.CartService.PlaceOrder(uint(userID), phoneIDs)
+	if err != nil {
+		return nil, err
+	}
+	return convertToModelOrder(order), nil
+}
+
+// UpdateOrderStatus is the resolver for the updateOrderStatus field.
+func (r *mutationResolver) UpdateOrderStatus(ctx context.Context, id string, status model.OrderStatus) (*model.Order, error) {
+	orderID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	order, err := r.CartService.GetOrderByID(uint(orderID))
+	if err != nil {
+		return nil, err
+	}
+
+	order.Status = cart.OrderStatus(status)
+
+	updatedOrder, err := r.CartService.UpdateOrder(&order)
+	if err != nil {
+		return nil, err
+	}
+	return convertToModelOrder(&updatedOrder), nil
+}
+
+// DeleteOrder is the resolver for the deleteOrder field.
+func (r *mutationResolver) DeleteOrder(ctx context.Context, id string) (bool, error) {
+	orderID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		return false, err
+	}
+
+	err = r.CartService.DeleteOrder(uint(orderID))
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Seller is the resolver for the seller field.
 func (r *phoneResolver) Seller(ctx context.Context, obj *model.Phone) (*model.User, error) {
 	if obj.Seller != nil {
@@ -386,6 +445,53 @@ func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error
 	}, nil
 }
 
+// Orders is the resolver for the orders field.
+func (r *queryResolver) Orders(ctx context.Context) ([]*model.Order, error) {
+	orders, err := r.CartService.GetAllOrders()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*model.Order
+	for i := range orders {
+		result = append(result, convertToModelOrder(&orders[i]))
+	}
+	return result, nil
+}
+
+// Order is the resolver for the order field.
+func (r *queryResolver) Order(ctx context.Context, id string) (*model.Order, error) {
+	orderID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	order, err := r.CartService.GetOrderByID(uint(orderID))
+	if err != nil {
+		return nil, err
+	}
+	return convertToModelOrder(&order), nil
+}
+
+// UserOrders is the resolver for the userOrders field.
+func (r *queryResolver) UserOrders(ctx context.Context, userID string) ([]*model.Order, error) {
+	uid, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	orders, err := r.CartService.GetOrdersByUserID(uint(uid))
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*model.Order
+	for i := range orders {
+		result = append(result, convertToModelOrder(&orders[i]))
+	}
+	return result, nil
+}
+
 // Phones is the resolver for the phones field.
 func (r *userResolver) Phones(ctx context.Context, obj *model.User) ([]*model.Phone, error) {
 	if len(obj.Phones) > 0 {
@@ -432,7 +538,9 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type phoneResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type userResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	phoneResolver    struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+	userResolver     struct{ *Resolver }
+)

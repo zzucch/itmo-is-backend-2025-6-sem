@@ -4,6 +4,11 @@ type Query {
   
   users: [User!]!
   user(id: ID!): User
+
+  
+  orders: [Order!]!
+  order(id: ID!): Order
+  userOrders(userId: ID!): [Order!]!
 }
 
 type Mutation {
@@ -13,6 +18,10 @@ type Mutation {
   
   updateUser(input: UpdateUserInput!): User!
   deleteUser(id: ID!): Boolean!
+
+  createOrder(input: OrderInput!): Order!
+  updateOrderStatus(id: ID!, status: OrderStatus!): Order!
+  deleteOrder(id: ID!): Boolean!
 }
 
 type Phone {
@@ -54,6 +63,29 @@ input UpdateUserInput {
 enum Role {
   USER
   ADMIN
+}
+
+type Order {
+  id: ID!
+  user: User!
+  phones: [Phone!]!
+  status: OrderStatus!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input OrderInput {
+  userId: ID!
+  phoneIDs: [ID!]!
+  shippingAddress: String!
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
 }
 
 directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION

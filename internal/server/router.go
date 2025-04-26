@@ -33,6 +33,7 @@ func Setup(controllers controllers, services services) http.Handler {
 		Resolvers: &resolvers.Resolver{
 			PhoneService: services.sellService,
 			UserService:  services.userService,
+			CartService:  services.cartService,
 		},
 	}
 
