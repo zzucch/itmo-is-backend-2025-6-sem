@@ -60,16 +60,20 @@ func (s *S3Client) UploadFile(
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(newFileName),
 		Body:   bytes.NewReader(buf.Bytes()),
-		ACL:    "public-read",
 	}); err != nil {
 		return "", err
 	}
 
-	url := fmt.Sprintf(
-		"https://storage.yandexcloud.net/%s/%s",
-		s.bucketName,
-		newFileName,
-	)
+	presignClient := s3.NewPresignClient(s.client)
+	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.bucketName),
+		Key:    aws.String(newFileName),
+	}, func(opts *s3.PresignOptions) {
+		opts.Expires = 7 * 24 * time.Hour
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to generate pre-signed URL: %v", err)
+	}
 
-	return url, nil
+	return presignedReq.URL, nil
 }

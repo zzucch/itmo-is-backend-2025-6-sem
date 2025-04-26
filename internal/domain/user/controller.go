@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -635,4 +636,5 @@ func (c *Controller) GetCart(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(cart)
+	json.NewEncoder(os.Stdout).Encode(cart)
 }

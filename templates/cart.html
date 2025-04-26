@@ -7,8 +7,8 @@
     <thead>
         <tr>
             <th>Product</th>
-            <th>Image</th>
             <th>Price</th>
+            <th>Image</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -48,7 +48,7 @@
             const propertiesToShow = {
                 Name: item.Name || "Unknown Item",
                 Price: `$${(item.Price || 0).toFixed(2)}`,
-                Image: item.Image ? `<img src="${item.Image.Path || item.Image.URL}" width="100">` : "No image"
+                Image: item.URL ? `<img src="${item.URL}" width="100">` : "No image"
             };
 
             for (const key in propertiesToShow) {
