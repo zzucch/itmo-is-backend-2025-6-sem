@@ -294,7 +294,13 @@ func Setup(controllers controllers, services services) http.Handler {
 		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))),
 	)
 
-	return timeMiddleware(corsMiddleware(mux))
+	return timeMiddleware(
+		cacheControlMiddleware(
+			corsMiddleware(
+				mux,
+			),
+		),
+	)
 }
 
 func corsMiddleware(next http.Handler) http.Handler {

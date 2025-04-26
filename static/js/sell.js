@@ -110,17 +110,51 @@ function resetForm() {
 }
 
 async function fetchPhones() {
+  const cacheKey = "phones-cache";
+
   try {
+    const cachedData = localStorage.getItem(cacheKey);
+    const cachedResponse = cachedData ? JSON.parse(cachedData) : null;
+
+    if (cachedResponse) {
+      const cacheExpiry = new Date(
+        cachedResponse.timestamp + cachedResponse.maxAge * 1000,
+      );
+      if (cacheExpiry > new Date()) {
+        displayPhones(cachedResponse.data);
+        return;
+      }
+    }
+
     const response = await fetch("/api/phones");
+
     if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text);
+      throw new Error(await response.text());
     }
 
     const phones = await response.json();
     displayPhones(phones);
+
+    const cacheControl = response.headers.get("Cache-Control") || "";
+    const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+    const maxAge = maxAgeMatch ? parseInt(maxAgeMatch[1]) : 0;
+
+    localStorage.setItem(
+      cacheKey,
+      JSON.stringify({
+        data: phones,
+        timestamp: Date.now(),
+        maxAge: maxAge,
+      }),
+    );
   } catch (error) {
-    alert(error);
+    console.error("Fetch error:", error);
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      displayPhones(JSON.parse(cachedData).data);
+    } else {
+      alert(error);
+    }
   }
 }
 
