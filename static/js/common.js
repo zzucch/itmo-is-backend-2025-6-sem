@@ -1,3 +1,5 @@
+import { fetchWithCache } from "./cached_fetch.js";
+
 // i know its kind of pointless but whatever
 document.addEventListener("DOMContentLoaded", () => {
   const gotoTopButton = document.createElement("button");
@@ -22,14 +24,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener("DOMContentLoaded", async function () {
   try {
-    const response = await fetch("/api/users/me", {
+    const user = await fetchWithCache("/api/users/me", {
       credentials: "same-origin",
     });
 
-    if (response.ok) {
-      const user = await response.json();
-      console.log("Authenticated as:", user.username);
-    }
+    console.log("Authenticated as:", user.username);
   } catch (error) {
     console.error("Error checking auth status:", error);
   }

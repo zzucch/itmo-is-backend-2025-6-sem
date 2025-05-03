@@ -1,3 +1,5 @@
+import { fetchWithCache } from "./cached_fetch.js";
+
 const specifications = [
   "Name",
   "Description",
@@ -154,51 +156,12 @@ function resetForm() {
 }
 
 async function fetchPhones() {
-  const cacheKey = "phones-cache";
-
   try {
-    const cachedData = localStorage.getItem(cacheKey);
-    const cachedResponse = cachedData ? JSON.parse(cachedData) : null;
-
-    if (cachedResponse) {
-      const cacheExpiry = new Date(
-        cachedResponse.timestamp + cachedResponse.maxAge * 1000,
-      );
-      if (cacheExpiry > new Date()) {
-        displayPhones(cachedResponse.data);
-        return;
-      }
-    }
-
-    const response = await fetch("/api/phones");
-
-    if (!response.ok) {
-      throw new Error(await response.text());
-    }
-
-    const phones = await response.json();
+    const phones = await fetchWithCache("/api/phones");
     displayPhones(phones);
-
-    const cacheControl = response.headers.get("Cache-Control") || "";
-    const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
-    const maxAge = maxAgeMatch ? parseInt(maxAgeMatch[1]) : 0;
-
-    localStorage.setItem(
-      cacheKey,
-      JSON.stringify({
-        data: phones,
-        timestamp: Date.now(),
-        maxAge: maxAge,
-      }),
-    );
   } catch (error) {
     console.error("Fetch error:", error);
-    const cachedData = localStorage.getItem(cacheKey);
-    if (cachedData) {
-      displayPhones(JSON.parse(cachedData).data);
-    } else {
-      alert(error);
-    }
+    alert(error);
   }
 }
 

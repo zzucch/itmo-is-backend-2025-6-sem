@@ -1,9 +1,11 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -54,6 +56,25 @@ func Setup(controllers controllers, services services) http.Handler {
 	graphqlServer.Use(extension.AutomaticPersistedQuery{
 		Cache: lru.New[string](100),
 	})
+
+	graphqlServer.AroundOperations(
+		func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
+			start := time.Now()
+
+			return graphql.ResponseHandler(func(ctx context.Context) *graphql.Response {
+				response := next(ctx)(ctx)
+
+				if response.Extensions == nil {
+					response.Extensions = make(map[string]any)
+				}
+				response.Extensions["tracing"] = map[string]any{
+					"duration": time.Since(start).String(),
+				}
+
+				return response
+			})
+		},
+	)
 
 	const complexityLimit = 2000
 	graphqlServer.Use(extension.FixedComplexityLimit(complexityLimit))
@@ -296,13 +317,13 @@ func Setup(controllers controllers, services services) http.Handler {
 		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))),
 	)
 
-	return timeMiddleware(
+	return etagMiddleware(timeMiddleware(
 		cacheControlMiddleware(
 			corsMiddleware(
 				mux,
 			),
 		),
-	)
+	))
 }
 
 func corsMiddleware(next http.Handler) http.Handler {

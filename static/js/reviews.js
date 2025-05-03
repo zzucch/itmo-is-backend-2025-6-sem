@@ -23,9 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
       requestCount++;
 
       const response = await fetch(`${API_URL}?${filter}`);
-      if (response.status !== 200) {
-        throw new Error(`Response status is not OK: ${response.status}`);
-      }
 
       const reviews = await response.json();
       const timeout_ms = 3500;
