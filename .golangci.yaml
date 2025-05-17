@@ -1,0 +1,25 @@
+run:
+  timeout: 5m
+linters-settings:
+  gofmt:
+    simplify: true
+  staticcheck:
+    checks: ["all", "-SA1029"]
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  revive:
+    rules:
+      - name: context-keys-type
+        disabled: true
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - gofmt
+    - revive

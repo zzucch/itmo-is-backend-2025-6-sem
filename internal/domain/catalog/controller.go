@@ -3,10 +3,11 @@ package catalog
 import (
 	"encoding/json"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 
-	pageData "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/page_data"
+	pageData "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/pagedata"
 )
 
 type Controller struct {
@@ -119,7 +120,9 @@ func (c *Controller) HandleCreateCatalog(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(catalog)
+	if err := json.NewEncoder(w).Encode(catalog); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary get all catalogs
@@ -130,7 +133,7 @@ func (c *Controller) HandleCreateCatalog(w http.ResponseWriter, r *http.Request)
 // @Failure 500 {string} string "Could not fetch catalogs"
 // @Router /api/catalogs [get]
 // @Security BearerAuth
-func (c *Controller) HandleGetCatalogs(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) HandleGetCatalogs(w http.ResponseWriter, _ *http.Request) {
 	var catalogs []Catalog
 	var err error
 
@@ -141,7 +144,9 @@ func (c *Controller) HandleGetCatalogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(catalogs)
+	if err := json.NewEncoder(w).Encode(catalogs); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary get catalog by ID
@@ -170,7 +175,9 @@ func (c *Controller) HandleGetCatalogByID(w http.ResponseWriter, r *http.Request
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(catalog)
+	if err := json.NewEncoder(w).Encode(catalog); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary update catalog
@@ -195,8 +202,14 @@ func (c *Controller) HandleUpdateCatalog(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	userID, _ := r.Context().Value("user_id").(uint)
-	isAdmin, _ := r.Context().Value("is_admin").(bool)
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		log.Fatal("not ok")
+	}
+	isAdmin, ok := r.Context().Value("is_admin").(bool)
+	if !ok {
+		log.Fatal("not ok")
+	}
 
 	var updated Catalog
 	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
@@ -223,7 +236,9 @@ func (c *Controller) HandleUpdateCatalog(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	json.NewEncoder(w).Encode(updated)
+	if err := json.NewEncoder(w).Encode(updated); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary delete catalog
@@ -245,8 +260,14 @@ func (c *Controller) HandleDeleteCatalog(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	userID, _ := r.Context().Value("user_id").(uint)
-	isAdmin, _ := r.Context().Value("is_admin").(bool)
+	userID, ok := r.Context().Value("user_id").(uint)
+	if !ok {
+		log.Fatal("not ok")
+	}
+	isAdmin, ok := r.Context().Value("is_admin").(bool)
+	if !ok {
+		log.Fatal("not ok")
+	}
 
 	catalog, err := c.service.GetCatalogByID(uint(id))
 	if err != nil {

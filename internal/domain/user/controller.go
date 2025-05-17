@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -58,7 +59,9 @@ func (c *Controller) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 
 	user.PasswordHash = ""
-	json.NewEncoder(w).Encode(user)
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary retrieves user by ID
@@ -239,10 +242,12 @@ func (c *Controller) Login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	if err := json.NewEncoder(w).Encode(map[string]any{
 		"user":  user,
 		"token": token,
-	})
+	}); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary Get user tokens
@@ -265,7 +270,9 @@ func (c *Controller) GetUserTokens(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tokens)
+	if err := json.NewEncoder(w).Encode(tokens); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary Invalidate all user tokens
@@ -287,7 +294,9 @@ func (c *Controller) InvalidateUserTokens(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	w.Write([]byte("All tokens invalidated successfully"))
+	if _, err := w.Write([]byte("All tokens invalidated successfully")); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary ends user session
@@ -434,7 +443,9 @@ func (c *Controller) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "updated"}); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary removes the currently authenticated user
@@ -576,7 +587,9 @@ func (c *Controller) AddToCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "added to cart"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "added to cart"}); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary Remove phone from user's cart
@@ -609,7 +622,9 @@ func (c *Controller) RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "removed from cart"})
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "removed from cart"}); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary Get user's cart
@@ -634,5 +649,7 @@ func (c *Controller) GetCart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(cart)
+	if err := json.NewEncoder(w).Encode(cart); err != nil {
+		log.Fatal(err)
+	}
 }

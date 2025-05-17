@@ -1,4 +1,4 @@
-package page_data
+package pagedata
 
 import "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
 

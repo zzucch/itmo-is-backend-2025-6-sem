@@ -27,19 +27,16 @@ func (controllers *controllers) notificationsSSEHandler(
 		return
 	}
 
-	for {
-		select {
-		case <-time.After(200 * time.Millisecond):
-			message := fmt.Sprintf(
-				"data: Update at %s\n\n",
-				time.Now().Format(time.TimeOnly),
-			)
-			_, err := w.Write([]byte(message))
-			if err != nil {
-				return
-			}
-
-			flusher.Flush()
+	for range time.Tick(200 * time.Millisecond) {
+		message := fmt.Sprintf(
+			"data: Update at %s\n\n",
+			time.Now().Format(time.TimeOnly),
+		)
+		_, err := w.Write([]byte(message))
+		if err != nil {
+			return
 		}
+
+		flusher.Flush()
 	}
 }

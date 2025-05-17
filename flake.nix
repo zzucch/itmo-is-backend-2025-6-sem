@@ -21,6 +21,7 @@
         packages = with pkgs; [
           alejandra
           go
+          golangci-lint
         ];
       };
     });

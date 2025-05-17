@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"log"
 	"time"
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
@@ -30,7 +31,10 @@ func (s *Storage) AddData() {
 		Username: "qwe",
 		Email:    "q@we",
 		PasswordHash: func() string {
-			hash, _ := user.HashPassword("qwe")
+			hash, err := user.HashPassword("qwe")
+			if err != nil {
+				log.Fatal(err)
+			}
 			return hash
 		}(),
 		LastLogin: time.Now(),
@@ -44,7 +48,10 @@ func (s *Storage) AddData() {
 		Username: "ewq",
 		Email:    "e@wq",
 		PasswordHash: func() string {
-			hash, _ := user.HashPassword("qwe")
+			hash, err := user.HashPassword("qwe")
+			if err != nil {
+				log.Fatal(err)
+			}
 			return hash
 		}(),
 		LastLogin: time.Now(),

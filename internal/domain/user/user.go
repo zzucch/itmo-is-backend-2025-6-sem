@@ -53,15 +53,15 @@ type CreateUserRequest struct {
 	Role     Role
 }
 
-type UserResponse struct {
+type Response struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 }
 
 type LoginResponse struct {
-	User  *UserResponse `json:"user"`
-	Token string        `json:"token"`
+	User  *Response `json:"user"`
+	Token string    `json:"token"`
 }
 
 type UpdateUserRequest struct {

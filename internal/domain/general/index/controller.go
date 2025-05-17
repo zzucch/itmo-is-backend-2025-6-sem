@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/catalog"
-	pageData "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/page_data"
+	pageData "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/pagedata"
 )
 
 type Controller struct {

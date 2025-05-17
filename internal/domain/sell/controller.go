@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/general"
-	pageData "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/page_data"
+	pageData "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/pagedata"
 )
 
 type Controller struct {
@@ -185,7 +186,9 @@ func (c *Controller) HandleGetAll(
 	}
 
 	responseWriter.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(responseWriter).Encode(userPhones)
+	if err := json.NewEncoder(responseWriter).Encode(userPhones); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary removes a phone listing
@@ -309,7 +312,9 @@ func (c *Controller) HandleGetPhoneByID(
 	}
 
 	responseWriter.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(responseWriter).Encode(phone)
+	if err := json.NewEncoder(responseWriter).Encode(phone); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // @Summary modifies phone listing
@@ -389,5 +394,7 @@ func (c *Controller) HandleUpdatePhone(
 	}
 
 	responseWriter.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(responseWriter).Encode(phone)
+	if err := json.NewEncoder(responseWriter).Encode(phone); err != nil {
+		log.Fatal(err)
+	}
 }

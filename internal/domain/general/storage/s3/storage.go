@@ -15,14 +15,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-type resolverV2 struct{}
-
-type S3Client struct {
+type Client struct {
 	client     *s3.Client
 	bucketName string
 }
 
-func NewS3Client() (*S3Client, error) {
+func NewS3Client() (*Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
@@ -37,13 +35,13 @@ func NewS3Client() (*S3Client, error) {
 		log.Fatal(err)
 	}
 
-	return &S3Client{
+	return &Client{
 		client:     client,
 		bucketName: "idk-second",
 	}, nil
 }
 
-func (s *S3Client) UploadFile(
+func (s *Client) UploadFile(
 	ctx context.Context,
 	file multipart.File,
 	fileName string,

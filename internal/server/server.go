@@ -34,7 +34,9 @@ func Start(logger *log.Logger, config *config.Config) error {
 	controllers, services := initControllers(logger, storage, s3Client)
 
 	logger.Printf("server is running on %s", address)
-	http.ListenAndServe(address, Setup(controllers, services))
+	if err := http.ListenAndServe(address, Setup(controllers, services)); err != nil {
+		log.Fatal(err)
+	}
 
 	return nil
 }
@@ -57,7 +59,7 @@ type services struct {
 func initControllers(
 	logger *log.Logger,
 	storage *storage.Storage,
-	s3Client *s3.S3Client,
+	s3Client *s3.Client,
 ) (controllers, services) {
 	commonTemplates := []string{
 		"templates/layout.html",

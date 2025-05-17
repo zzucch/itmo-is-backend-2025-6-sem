@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	pageData "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/page_data"
+	pageData "github.com/is-web-y26/m3302-milovatskiy/internal/domain/general/pagedata"
 )
 
 type Controller struct {
@@ -107,10 +107,12 @@ func (c *Controller) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]any{
+	if err := json.NewEncoder(w).Encode(map[string]any{
 		"order_id": order.ID,
 		"message":  "Order placed successfully",
-	})
+	}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // @Summary Retrieves all orders
@@ -172,7 +174,11 @@ func (c *Controller) GetOrderByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isAdmin, _ := r.Context().Value("is_admin").(bool)
+	isAdmin, ok := r.Context().Value("is_admin").(bool)
+	if !ok {
+		http.Error(w, "not ok", http.StatusInternalServerError)
+		return
+	}
 
 	order, err := c.service.GetOrderByID(uint(id))
 	if err != nil {

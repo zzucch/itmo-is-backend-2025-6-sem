@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
+
+	// for graphql thingy
 	_ "github.com/is-web-y26/m3302-milovatskiy/docs"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/generated"
 	"github.com/is-web-y26/m3302-milovatskiy/internal/domain/graph/resolvers"
@@ -58,7 +61,7 @@ func Setup(controllers controllers, services services) http.Handler {
 	})
 
 	graphqlServer.AroundOperations(
-		func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
+		func(_ context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
 			start := time.Now()
 
 			return graphql.ResponseHandler(func(ctx context.Context) *graphql.Response {
@@ -113,7 +116,9 @@ func Setup(controllers controllers, services services) http.Handler {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 		// it conflicts with "/" on 3000
-		r.Run(":3001")
+		if err := r.Run(":3001"); err != nil {
+			log.Fatal(err)
+		}
 	}()
 
 	mux.HandleFunc("/api/users", func(w http.ResponseWriter, r *http.Request) {

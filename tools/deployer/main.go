@@ -15,5 +15,7 @@ func main() {
 	}
 
 	log.Printf("server is running on %s", address)
-	http.ListenAndServe(address, deploy.Setup())
+	if err := http.ListenAndServe(address, deploy.Setup()); err != nil {
+		log.Fatal(err)
+	}
 }

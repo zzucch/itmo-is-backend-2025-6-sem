@@ -5,14 +5,14 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"io"
+	"log"
 	"net/http"
 )
 
 type etagResponseWriter struct {
 	http.ResponseWriter
-	statusCode  int
-	headersSent bool
-	body        *bytes.Buffer
+	statusCode int
+	body       *bytes.Buffer
 }
 
 func (rw *etagResponseWriter) WriteHeader(statusCode int) {
@@ -49,6 +49,8 @@ func etagMiddleware(next http.Handler) http.Handler {
 			w.Header()[k] = v
 		}
 		w.WriteHeader(rw.statusCode)
-		_, _ = io.Copy(w, rw.body)
+		if _, err := io.Copy(w, rw.body); err != nil {
+			log.Fatal(err)
+		}
 	})
 }

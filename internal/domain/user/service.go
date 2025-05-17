@@ -171,7 +171,7 @@ func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
 	jwtToken, err := jwt.ParseWithClaims(
 		tokenString,
 		claims,
-		func(token *jwt.Token) (any, error) {
+		func(_ *jwt.Token) (any, error) {
 			return []byte(secretKey), nil
 		},
 	)

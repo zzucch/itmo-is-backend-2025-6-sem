@@ -7,10 +7,10 @@ import (
 
 type Service struct {
 	repository Repository
-	s3Client   *s3.S3Client
+	s3Client   *s3.Client
 }
 
-func NewService(repository Repository, s3Client *s3.S3Client) *Service {
+func NewService(repository Repository, s3Client *s3.Client) *Service {
 	return &Service{
 		repository: repository,
 		s3Client:   s3Client,

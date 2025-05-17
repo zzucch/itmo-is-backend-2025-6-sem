@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"time"
 
@@ -23,7 +24,12 @@ func NewService(repository Repository) *Service {
 func (s *Service) GetAllCatalogs() ([]Catalog, error) {
 	cacheKey := "all_catalogs"
 	if cached, found := s.cache.get(cacheKey); found {
-		return cached.([]Catalog), nil
+		value, ok := cached.([]Catalog)
+		if !ok {
+			log.Fatal("not ok")
+		}
+
+		return value, nil
 	}
 
 	catalogs, err := s.repository.FindAllCatalogs()
@@ -38,7 +44,12 @@ func (s *Service) GetAllCatalogs() ([]Catalog, error) {
 func (s *Service) GetPhonesInCatalog(catalogID uint) (*Catalog, error) {
 	cacheKey := "catalog_" + strconv.FormatUint(uint64(catalogID), 10)
 	if cached, found := s.cache.get(cacheKey); found {
-		return cached.(*Catalog), nil
+		value, ok := cached.(*Catalog)
+		if !ok {
+			log.Fatal("not ok")
+		}
+
+		return value, nil
 	}
 
 	catalog, err := s.repository.FindCatalogByID(catalogID)
@@ -53,7 +64,12 @@ func (s *Service) GetPhonesInCatalog(catalogID uint) (*Catalog, error) {
 func (s *Service) GetSalePhone() (general.Phone, error) {
 	cacheKey := "sale_phone"
 	if cached, found := s.cache.get(cacheKey); found {
-		return cached.(general.Phone), nil
+		value, ok := cached.(general.Phone)
+		if !ok {
+			log.Fatal("not ok")
+		}
+
+		return value, nil
 	}
 
 	catalog, err := s.repository.FindCatalogByID(1)
@@ -77,7 +93,12 @@ func (s *Service) GetSalePhone() (general.Phone, error) {
 func (s *Service) GetFeaturedPhones() ([]general.Phone, error) {
 	cacheKey := "featured_phones"
 	if cached, found := s.cache.get(cacheKey); found {
-		return cached.([]general.Phone), nil
+		value, ok := cached.([]general.Phone)
+		if !ok {
+			log.Fatal("not ok")
+		}
+
+		return value, nil
 	}
 
 	catalog, err := s.repository.FindCatalogByID(2)
@@ -92,7 +113,12 @@ func (s *Service) GetFeaturedPhones() ([]general.Phone, error) {
 func (s *Service) GetNewPhones() ([]general.Phone, error) {
 	cacheKey := "new_phones"
 	if cached, found := s.cache.get(cacheKey); found {
-		return cached.([]general.Phone), nil
+		value, ok := cached.([]general.Phone)
+		if !ok {
+			log.Fatal("not ok")
+		}
+
+		return value, nil
 	}
 
 	catalog, err := s.repository.FindCatalogByID(3)
